@@ -33,11 +33,10 @@ export async function POST(req: Request) {
 
     let answer = data?.choices?.[0]?.message?.content ?? "";
 
-    // Clean ChatKit / retrieval junk tokens
-    answer = answer
-      .replace(//g, "")
-      .replace(//g, "")
-      .trim();
+    // Clean retrieval junk tokens (safe ASCII method)
+answer = answer
+  .split(" .split("
+
 
     return NextResponse.json({ answer });
   } catch (error) {
