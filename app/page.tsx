@@ -1,10 +1,60 @@
+"use client";
+
+import { useState } from "react";
+
 export default function Home() {
+  const [question, setQuestion] = useState("");
+  const [answer, setAnswer] = useState("");
+  const [loading, setLoading] = useState(false);
+
+  async function ask() {
+    if (!question.trim()) return;
+    setLoading(true);
+    setAnswer("");
+
+    const res = await fetch("/api/ask", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ question }),
+    });
+
+    const data = await res.json();
+    setAnswer(data.answer || "No answer received.");
+    setLoading(false);
+  }
+
   return (
-    <main style={{ padding: "40px", fontFamily: "Arial, sans-serif" }}>
+    <main style={{ padding: 40, maxWidth: 900 }}>
       <h1>PMC CENTRE AI – Clean UI (Prototype)</h1>
-      <p>
-        This is Phase 1 of the custom UI. Chat connection will be added next.
-      </p>
+
+      <textarea
+        rows={4}
+        style={{ width: "100%", marginTop: 20 }}
+        placeholder="Ask a PMC technical question…"
+        value={question}
+        onChange={(e) => setQuestion(e.target.value)}
+      />
+
+      <button
+        onClick={ask}
+        disabled={loading}
+        style={{ marginTop: 10, padding: "8px 16px" }}
+      >
+        {loading ? "Thinking…" : "Ask"}
+      </button>
+
+      {answer && (
+        <div
+          style={{
+            marginTop: 30,
+            padding: 20,
+            border: "1px solid #ccc",
+            whiteSpace: "pre-wrap",
+          }}
+        >
+          {answer}
+        </div>
+      )}
     </main>
   );
 }
