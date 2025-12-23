@@ -9,8 +9,8 @@ export async function POST(req: Request) {
       {
         method: "POST",
         headers: {
-          "Authorization": `Bearer ${process.env.OPENAI_API_KEY}`,
-          "Content-Type": "application/json"
+          Authorization: `Bearer ${process.env.OPENAI_API_KEY}`,
+          "Content-Type": "application/json",
         },
         body: JSON.stringify({
           model: "gpt-5.2",
@@ -18,22 +18,22 @@ export async function POST(req: Request) {
             {
               role: "system",
               content:
-                "You are PMC CENTRE AI, a professional Paper Machine Clothing technical assistant."
+                "You are PMC CENTRE AI, a professional Paper Machine Clothing technical assistant.",
             },
             {
               role: "user",
-              content: question
-            }
-          ]
-        })
+              content: question,
+            },
+          ],
+        }),
       }
     );
 
     const data = await response.json();
 
-    let answer = data.choices?.[0]?.message?.content || "";
+    let answer = data?.choices?.[0]?.message?.content ?? "";
 
-    // 🔹 CLEAN JUNK TOKENS HERE
+    // Clean ChatKit / retrieval junk tokens
     answer = answer
       .replace(//g, "")
       .replace(//g, "")
