@@ -33,9 +33,7 @@ export async function POST(req: Request) {
 
     let answer = data?.choices?.[0]?.message?.content ?? "";
 
-    // Clean retrieval junk tokens (safe ASCII method)
-answer = answer
-  .split(" .split("
+    answer = String(answer).trim();
 
 
     return NextResponse.json({ answer });
