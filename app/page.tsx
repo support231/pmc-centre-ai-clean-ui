@@ -61,7 +61,7 @@ export default function Home() {
         background: "#f2f6fb",
       }}
     >
-      {/* INSTRUCTION TEXT (iframe-safe) */}
+      {/* INSTRUCTION TEXT */}
       <div
         style={{
           textAlign: "center",
@@ -214,7 +214,7 @@ export default function Home() {
 }
 
 /* =======================
-   MODE CARD (COMPACT)
+   MODE CARD (ALIGNED)
    ======================= */
 
 function modeCard(
@@ -229,10 +229,13 @@ function modeCard(
     <div
       style={{
         width: 300,
+        minHeight: 200,
         padding: "14px 16px",
         borderRadius: 10,
         background: active === value ? "#e8f0fe" : "#ffffff",
         boxShadow: "0 3px 10px rgba(0,0,0,0.07)",
+        display: "flex",
+        flexDirection: "column",
       }}
     >
       <h3 style={{ marginBottom: 6, fontSize: 17 }}>{title}</h3>
@@ -242,17 +245,18 @@ function modeCard(
           fontSize: 13,
           color: "#555",
           lineHeight: 1.4,
-          marginBottom: 10,
         }}
       >
         {text}
       </p>
 
+      {/* BUTTON PINNED TO BOTTOM */}
       <button
         onClick={() => setMode(value)}
         style={{
           width: "100%",
           padding: "10px 0",
+          marginTop: "auto",
           background: "#1a73e8",
           color: "#fff",
           border: "none",
