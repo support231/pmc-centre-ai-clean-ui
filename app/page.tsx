@@ -49,25 +49,25 @@ export default function Home() {
 
   function copyAnswer() {
     navigator.clipboard.writeText(answer);
-    alert("Answer copied");
+    alert("Answer copied to clipboard");
   }
 
   return (
     <main
       style={{
-        padding: 30,
+        padding: 24,
         maxWidth: 1200,
         margin: "0 auto",
         background: "#f2f6fb",
       }}
     >
-      {/* CENTERED INSTRUCTION */}
+      {/* INSTRUCTION TEXT (iframe-safe) */}
       <div
         style={{
           textAlign: "center",
           fontSize: 20,
           fontWeight: 600,
-          marginBottom: 30,
+          marginBottom: 24,
           color: "#1a73e8",
         }}
       >
@@ -78,9 +78,10 @@ export default function Home() {
       <div
         style={{
           display: "flex",
-          gap: 24,
+          gap: 20,
           justifyContent: "center",
           flexWrap: "wrap",
+          marginBottom: 30,
         }}
       >
         {modeCard(
@@ -114,7 +115,6 @@ export default function Home() {
       {/* CHAT AREA */}
       <div
         style={{
-          marginTop: 40,
           background: "#ffffff",
           padding: 20,
           borderRadius: 8,
@@ -126,6 +126,7 @@ export default function Home() {
           style={{
             display: "flex",
             justifyContent: "space-between",
+            alignItems: "center",
             marginBottom: 10,
           }}
         >
@@ -152,6 +153,7 @@ export default function Home() {
           />
         </div>
 
+        {/* QUESTION INPUT */}
         <textarea
           rows={4}
           style={textareaStyle}
@@ -161,6 +163,7 @@ export default function Home() {
           onChange={(e) => setQuestion(e.target.value)}
         />
 
+        {/* SUBMIT */}
         <div style={{ marginTop: 10 }}>
           <button
             onClick={ask}
@@ -171,6 +174,7 @@ export default function Home() {
           </button>
         </div>
 
+        {/* ANSWER */}
         {answer && (
           <div style={{ marginTop: 20 }}>
             <div
@@ -183,28 +187,35 @@ export default function Home() {
               <strong>Answer</strong>
               <button onClick={copyAnswer}>Copy</button>
             </div>
-            <div
-  style={{
-    whiteSpace: "pre-wrap",
-    background: "#f7f9fc",
-    padding: 12,
-    borderRadius: 6,
-    maxHeight: "320px",
-    overflowY: "auto",
-    lineHeight: 1.5,
-  }}
->
-  {answer}
-</div>
 
+            <div
+              style={{
+                whiteSpace: "pre-wrap",
+                background: "#f7f9fc",
+                padding: 12,
+                borderRadius: 6,
+                maxHeight: 320,
+                overflowY: "auto",
+                lineHeight: 1.5,
+              }}
+            >
+              {answer}
+            </div>
           </div>
         )}
       </div>
+
+      {/* FOOTER */}
+      <p style={{ marginTop: 20, fontSize: 12, color: "#666" }}>
+        Powered by OpenAI and PMC CENTRE’s specialized industry knowledge base
+      </p>
     </main>
   );
 }
 
-/* ---------- HELPERS ---------- */
+/* =======================
+   MODE CARD (COMPACT)
+   ======================= */
 
 function modeCard(
   title: string,
@@ -217,25 +228,36 @@ function modeCard(
   return (
     <div
       style={{
-        width: 320,
-        padding: 20,
+        width: 300,
+        padding: "14px 16px",
         borderRadius: 10,
         background: active === value ? "#e8f0fe" : "#ffffff",
-        boxShadow: "0 4px 12px rgba(0,0,0,0.08)",
+        boxShadow: "0 3px 10px rgba(0,0,0,0.07)",
       }}
     >
-      <h3 style={{ marginBottom: 10 }}>{title}</h3>
-      <p style={{ fontSize: 14, color: "#555", minHeight: 90 }}>{text}</p>
+      <h3 style={{ marginBottom: 6, fontSize: 17 }}>{title}</h3>
+
+      <p
+        style={{
+          fontSize: 13,
+          color: "#555",
+          lineHeight: 1.4,
+          marginBottom: 10,
+        }}
+      >
+        {text}
+      </p>
+
       <button
         onClick={() => setMode(value)}
         style={{
           width: "100%",
-          padding: "12px 0",
+          padding: "10px 0",
           background: "#1a73e8",
           color: "#fff",
           border: "none",
           borderRadius: 6,
-          fontSize: 15,
+          fontSize: 14,
           cursor: "pointer",
         }}
       >
@@ -244,6 +266,10 @@ function modeCard(
     </div>
   );
 }
+
+/* =======================
+   STYLES
+   ======================= */
 
 const textareaStyle = {
   width: "100%",
