@@ -5,12 +5,14 @@ import { useState } from "react";
 export default function Home() {
   const [question, setQuestion] = useState("");
   const [answer, setAnswer] = useState("");
+  const [intent, setIntent] = useState("");
   const [loading, setLoading] = useState(false);
 
   async function ask() {
     if (!question.trim()) return;
     setLoading(true);
     setAnswer("");
+    setIntent("");
 
     const res = await fetch("/api/ask", {
       method: "POST",
@@ -19,6 +21,8 @@ export default function Home() {
     });
 
     const data = await res.json();
+
+    setIntent(data.intent || "UNKNOWN");
     setAnswer(data.answer || "No answer received.");
     setLoading(false);
   }
@@ -43,7 +47,7 @@ export default function Home() {
         {loading ? "Thinking…" : "Ask"}
       </button>
 
-      {answer && (
+      {(answer || intent) && (
         <div
           style={{
             marginTop: 30,
@@ -52,6 +56,12 @@ export default function Home() {
             whiteSpace: "pre-wrap",
           }}
         >
+          {intent && (
+            <div style={{ marginBottom: 10, color: "#666" }}>
+              <strong>Intent:</strong> {intent}
+            </div>
+          )}
+
           {answer}
         </div>
       )}
