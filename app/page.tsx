@@ -184,15 +184,19 @@ export default function Home() {
               <button onClick={copyAnswer}>Copy</button>
             </div>
             <div
-              style={{
-                whiteSpace: "pre-wrap",
-                background: "#f7f9fc",
-                padding: 12,
-                borderRadius: 6,
-              }}
-            >
-              {answer}
-            </div>
+  style={{
+    whiteSpace: "pre-wrap",
+    background: "#f7f9fc",
+    padding: 12,
+    borderRadius: 6,
+    maxHeight: "320px",
+    overflowY: "auto",
+    lineHeight: 1.5,
+  }}
+>
+  {answer}
+</div>
+
           </div>
         )}
       </div>
