@@ -10,19 +10,23 @@ export default function Home() {
 
   async function ask() {
     if (!question.trim()) return;
+
     setLoading(true);
     setAnswer("");
     setIntent("");
 
-    await fetch(`${process.env.NEXT_PUBLIC_PMC_BACKEND_URL}/ask`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ question }),
-    });
+    const res = await fetch(
+      `${process.env.NEXT_PUBLIC_PMC_BACKEND_URL}/ask`,
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ question }),
+      }
+    );
 
     const data = await res.json();
 
-    setIntent(data.intent || "UNKNOWN");
+    setIntent(data.intent || "");
     setAnswer(data.answer || "No answer received.");
     setLoading(false);
   }
@@ -61,7 +65,6 @@ export default function Home() {
               <strong>Intent:</strong> {intent}
             </div>
           )}
-
           {answer}
         </div>
       )}
