@@ -5,53 +5,68 @@ import { useState } from "react";
 export default function Home() {
   const [question, setQuestion] = useState("");
   const [answer, setAnswer] = useState("");
-  const [intent, setIntent] = useState("");
   const [loading, setLoading] = useState(false);
+  const [mode, setMode] = useState<"PMC" | "GENERAL" | "">("");
 
-  async function ask() {
+  async function ask(selectedMode: "PMC" | "GENERAL") {
     if (!question.trim()) return;
 
+    setMode(selectedMode);
     setLoading(true);
     setAnswer("");
-    setIntent("");
 
     const res = await fetch(
       `${process.env.NEXT_PUBLIC_PMC_BACKEND_URL}/ask`,
       {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ question }),
+        body: JSON.stringify({
+          question,
+          mode: selectedMode,
+        }),
       }
     );
 
     const data = await res.json();
-
-    setIntent(data.intent || "");
     setAnswer(data.answer || "No answer received.");
     setLoading(false);
   }
 
   return (
     <main style={{ padding: 40, maxWidth: 900 }}>
-      <h1>PMC CENTRE AI – Clean UI (Prototype)</h1>
+      <h1>PMC CENTRE AI</h1>
 
       <textarea
         rows={4}
         style={{ width: "100%", marginTop: 20 }}
-        placeholder="Ask a PMC technical question…"
+        placeholder="Type your question here…"
         value={question}
         onChange={(e) => setQuestion(e.target.value)}
       />
 
-      <button
-        onClick={ask}
-        disabled={loading}
-        style={{ marginTop: 10, padding: "8px 16px" }}
-      >
-        {loading ? "Thinking…" : "Ask"}
-      </button>
+      <div style={{ marginTop: 12, display: "flex", gap: 10 }}>
+        <button
+          onClick={() => ask("PMC")}
+          disabled={loading}
+          style={{ padding: "8px 16px" }}
+        >
+          Ask PMC Question
+        </button>
 
-      {(answer || intent) && (
+        <button
+          onClick={() => ask("GENERAL")}
+          disabled={loading}
+          style={{ padding: "8px 16px" }}
+        >
+          Ask General Question
+        </button>
+      </div>
+
+      {loading && (
+        <div style={{ marginTop: 20 }}>Thinking…</div>
+      )}
+
+      {answer && (
         <div
           style={{
             marginTop: 30,
@@ -60,11 +75,6 @@ export default function Home() {
             whiteSpace: "pre-wrap",
           }}
         >
-          {intent && (
-            <div style={{ marginBottom: 10, color: "#666" }}>
-              <strong>Intent:</strong> {intent}
-            </div>
-          )}
           {answer}
         </div>
       )}
