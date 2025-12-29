@@ -8,10 +8,9 @@ export default function Home() {
   const [loading, setLoading] = useState(false);
   const [mode, setMode] = useState<"PMC" | "GENERAL" | "">("");
 
-  async function ask(selectedMode: "PMC" | "GENERAL") {
-    if (!question.trim()) return;
+  async function ask() {
+    if (!question.trim() || !mode) return;
 
-    setMode(selectedMode);
     setLoading(true);
     setAnswer("");
 
@@ -22,7 +21,7 @@ export default function Home() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           question,
-          mode: selectedMode,
+          mode,
         }),
       }
     );
@@ -32,39 +31,68 @@ export default function Home() {
     setLoading(false);
   }
 
+  function placeholderText() {
+    if (mode === "PMC") {
+      return "Ask a Paper Machine Clothing question (forming, felt, dryer fabrics)…";
+    }
+    if (mode === "GENERAL") {
+      return "Ask a general technical or knowledge question…";
+    }
+    return "Select a question type first…";
+  }
+
   return (
     <main style={{ padding: 40, maxWidth: 900 }}>
       <h1>PMC CENTRE AI</h1>
 
-      <textarea
-        rows={4}
-        style={{ width: "100%", marginTop: 20 }}
-        placeholder="Type your question here…"
-        value={question}
-        onChange={(e) => setQuestion(e.target.value)}
-      />
+      <p style={{ marginTop: 10, color: "#555" }}>
+        Choose the question type to get the best answer.
+      </p>
 
-      <div style={{ marginTop: 12, display: "flex", gap: 10 }}>
+      <div style={{ marginTop: 15, display: "flex", gap: 10 }}>
         <button
-          onClick={() => ask("PMC")}
+          onClick={() => setMode("PMC")}
           disabled={loading}
-          style={{ padding: "8px 16px" }}
+          style={{
+            padding: "8px 16px",
+            backgroundColor: mode === "PMC" ? "#ddd" : "#f5f5f5",
+            border: "1px solid #999",
+          }}
         >
           Ask PMC Question
         </button>
 
         <button
-          onClick={() => ask("GENERAL")}
+          onClick={() => setMode("GENERAL")}
           disabled={loading}
-          style={{ padding: "8px 16px" }}
+          style={{
+            padding: "8px 16px",
+            backgroundColor: mode === "GENERAL" ? "#ddd" : "#f5f5f5",
+            border: "1px solid #999",
+          }}
         >
           Ask General Question
         </button>
       </div>
 
-      {loading && (
-        <div style={{ marginTop: 20 }}>Thinking…</div>
-      )}
+      <textarea
+        rows={4}
+        style={{ width: "100%", marginTop: 20 }}
+        placeholder={placeholderText()}
+        value={question}
+        disabled={!mode || loading}
+        onChange={(e) => setQuestion(e.target.value)}
+      />
+
+      <div style={{ marginTop: 10 }}>
+        <button
+          onClick={ask}
+          disabled={!mode || !question.trim() || loading}
+          style={{ padding: "8px 16px" }}
+        >
+          {loading ? "Thinking…" : "Submit"}
+        </button>
+      </div>
 
       {answer && (
         <div
