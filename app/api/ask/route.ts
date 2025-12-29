@@ -16,12 +16,18 @@ export async function POST(req: Request) {
     );
 
     const data = await response.json();
-    const answer = String(data?.answer ?? "").trim();
 
-    return NextResponse.json({ answer });
-  } catch {
+    return NextResponse.json({
+      intent: data.intent,
+      answer: data.answer,
+    });
+
+  } catch (err) {
     return NextResponse.json(
-      { error: "Failed to get response" },
+      {
+        intent: "ERROR",
+        answer: "Failed to get response from backend",
+      },
       { status: 500 }
     );
   }
