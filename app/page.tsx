@@ -14,7 +14,7 @@ export default function Home() {
     setAnswer("");
     setIntent("");
 
-    const res = await fetch("/api/ask", {
+    const res = await fetch("https://pmc-centre-kb-backend.onrender.com/ask", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ question }),
