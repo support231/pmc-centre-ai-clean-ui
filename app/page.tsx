@@ -24,10 +24,7 @@ export default function Home() {
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            question,
-            mode,
-          }),
+          body: JSON.stringify({ question, mode }),
         }
       );
 
@@ -41,157 +38,141 @@ export default function Home() {
   }
 
   function placeholderText() {
-    if (mode === "PMC") {
+    if (mode === "PMC")
       return "Ask a Paper Machine Clothing question (forming, felt, dryer fabrics)…";
-    }
-    if (mode === "GENERAL") {
+    if (mode === "GENERAL")
       return "Ask a general question (draft email, explain concept, GK)…";
-    }
-    if (mode === "LIVE") {
-      return "Ask for latest developments, current events, or recent announcements…";
-    }
+    if (mode === "LIVE")
+      return "Ask about latest developments, announcements, or current events…";
     return "Select a question type first…";
   }
 
   function copyAnswer() {
     navigator.clipboard.writeText(answer);
-    alert("Answer copied to clipboard");
+    alert("Answer copied");
   }
 
   return (
-    <main style={{ padding: 40, maxWidth: 1100, margin: "0 auto" }}>
-      {/* HEADER */}
-      <h1>PMC CENTRE AI</h1>
-      <p style={{ marginTop: 8, color: "#555" }}>
+    <main
+      style={{
+        padding: 30,
+        maxWidth: 1200,
+        margin: "0 auto",
+        background: "#f2f6fb",
+      }}
+    >
+      {/* CENTERED INSTRUCTION */}
+      <div
+        style={{
+          textAlign: "center",
+          fontSize: 20,
+          fontWeight: 600,
+          marginBottom: 30,
+          color: "#1a73e8",
+        }}
+      >
         Choose the question type to get the best possible answer.
-      </p>
+      </div>
 
-      {/* MODE BLOCKS */}
+      {/* MODE CARDS */}
       <div
         style={{
           display: "flex",
-          gap: 20,
-          marginTop: 30,
+          gap: 24,
+          justifyContent: "center",
           flexWrap: "wrap",
         }}
       >
-        {/* PMC MODE */}
-        <div style={cardStyle(mode === "PMC")}>
-          <h3>PMC Expert Mode</h3>
-          <p>
-            Deep technical guidance on Paper Machine Clothing technology.
-            Best for troubleshooting, fabric selection, and process questions.
-          </p>
-          <button onClick={() => setMode("PMC")} disabled={loading}>
-            Ask PMC Question
-          </button>
-        </div>
+        {modeCard(
+          "PMC Expert Mode",
+          "Deep technical guidance on Paper Machine Clothing technology. Best for troubleshooting, fabric selection, and process questions.",
+          "Ask PMC Question",
+          "PMC",
+          mode,
+          setMode
+        )}
 
-        {/* GENERAL MODE */}
-        <div style={cardStyle(mode === "GENERAL")}>
-          <h3>General AI Assistant</h3>
-          <p>
-            Use AI for general knowledge, drafting letters or emails,
-            explanations, and non-PMC questions.
-          </p>
-          <button onClick={() => setMode("GENERAL")} disabled={loading}>
-            Ask General Question
-          </button>
-        </div>
+        {modeCard(
+          "General AI Assistant",
+          "Use AI for general knowledge, drafting letters or emails, explanations, and non-PMC questions.",
+          "Ask General Question",
+          "GENERAL",
+          mode,
+          setMode
+        )}
 
-        {/* LIVE MODE */}
-        <div style={cardStyle(mode === "LIVE")}>
-          <h3>Live Web Search</h3>
-          <p>
-            Get answers based on the latest available information from the web.
-            Ideal for recent developments, announcements, and current events.
-          </p>
-          <button onClick={() => setMode("LIVE")} disabled={loading}>
-            Live Search (Latest Info)
-          </button>
-        </div>
+        {modeCard(
+          "Live Web Search",
+          "Get answers based on the latest available information from the web. Ideal for recent developments, announcements, and current events.",
+          "Live Search (Latest Info)",
+          "LIVE",
+          mode,
+          setMode
+        )}
       </div>
 
       {/* CHAT AREA */}
       <div
         style={{
           marginTop: 40,
+          background: "#ffffff",
           padding: 20,
-          border: "1px solid #ccc",
-          borderRadius: 6,
+          borderRadius: 8,
+          boxShadow: "0 4px 12px rgba(0,0,0,0.08)",
         }}
       >
-        {/* CHAT TOOLBAR */}
+        {/* TOOLBAR */}
         <div
           style={{
             display: "flex",
             justifyContent: "space-between",
-            alignItems: "center",
             marginBottom: 10,
           }}
         >
-          <strong>
+          <strong style={{ color: "#1a73e8" }}>
             {mode ? `Mode: ${mode}` : "Select a mode to start"}
           </strong>
 
-          {/* FILE UPLOAD */}
-          <div>
-            <button
-              onClick={() => fileInputRef.current?.click()}
-              disabled={!mode || loading}
-              title="Upload file (demo)"
-              style={{
-                width: 32,
-                height: 32,
-                borderRadius: "50%",
-                fontSize: 18,
-                cursor: "pointer",
-              }}
-            >
-              +
-            </button>
-            <input
-              type="file"
-              ref={fileInputRef}
-              hidden
-              onChange={() =>
-                alert("File upload UI only (backend not connected yet).")
-              }
-            />
-          </div>
+          <button
+            onClick={() => fileInputRef.current?.click()}
+            disabled={!mode || loading}
+            title="Upload file"
+            style={uploadBtn}
+          >
+            +
+          </button>
+
+          <input
+            type="file"
+            ref={fileInputRef}
+            hidden
+            onChange={() =>
+              alert("File upload UI only (backend not connected yet).")
+            }
+          />
         </div>
 
-        {/* QUESTION INPUT */}
         <textarea
           rows={4}
-          style={{ width: "100%", padding: 8 }}
+          style={textareaStyle}
           placeholder={placeholderText()}
           value={question}
           disabled={!mode || loading}
           onChange={(e) => setQuestion(e.target.value)}
         />
 
-        {/* SUBMIT */}
         <div style={{ marginTop: 10 }}>
           <button
             onClick={ask}
             disabled={!mode || !question.trim() || loading}
-            style={{ padding: "8px 16px" }}
+            style={submitBtn}
           >
             {loading ? "Thinking…" : "Submit"}
           </button>
         </div>
 
-        {/* ANSWER */}
         {answer && (
-          <div
-            style={{
-              marginTop: 20,
-              padding: 15,
-              borderTop: "1px solid #ddd",
-              whiteSpace: "pre-wrap",
-            }}
-          >
+          <div style={{ marginTop: 20 }}>
             <div
               style={{
                 display: "flex",
@@ -202,27 +183,87 @@ export default function Home() {
               <strong>Answer</strong>
               <button onClick={copyAnswer}>Copy</button>
             </div>
-            {answer}
+            <div
+              style={{
+                whiteSpace: "pre-wrap",
+                background: "#f7f9fc",
+                padding: 12,
+                borderRadius: 6,
+              }}
+            >
+              {answer}
+            </div>
           </div>
         )}
       </div>
-
-      {/* FOOTER */}
-      <p style={{ marginTop: 30, fontSize: 12, color: "#666" }}>
-        Powered by OpenAI and PMC CENTRE’s specialized industry knowledge base
-      </p>
     </main>
   );
 }
 
-/* ---------- STYLES ---------- */
+/* ---------- HELPERS ---------- */
 
-function cardStyle(active: boolean): React.CSSProperties {
-  return {
-    flex: "1 1 300px",
-    padding: 20,
-    border: "1px solid #ccc",
-    borderRadius: 6,
-    backgroundColor: active ? "#f2f2f2" : "#fff",
-  };
+function modeCard(
+  title: string,
+  text: string,
+  btn: string,
+  value: Mode,
+  active: Mode,
+  setMode: (m: Mode) => void
+) {
+  return (
+    <div
+      style={{
+        width: 320,
+        padding: 20,
+        borderRadius: 10,
+        background: active === value ? "#e8f0fe" : "#ffffff",
+        boxShadow: "0 4px 12px rgba(0,0,0,0.08)",
+      }}
+    >
+      <h3 style={{ marginBottom: 10 }}>{title}</h3>
+      <p style={{ fontSize: 14, color: "#555", minHeight: 90 }}>{text}</p>
+      <button
+        onClick={() => setMode(value)}
+        style={{
+          width: "100%",
+          padding: "12px 0",
+          background: "#1a73e8",
+          color: "#fff",
+          border: "none",
+          borderRadius: 6,
+          fontSize: 15,
+          cursor: "pointer",
+        }}
+      >
+        {btn}
+      </button>
+    </div>
+  );
 }
+
+const textareaStyle = {
+  width: "100%",
+  padding: 10,
+  borderRadius: 6,
+  border: "1px solid #ccc",
+};
+
+const submitBtn = {
+  padding: "10px 18px",
+  background: "#1a73e8",
+  color: "#fff",
+  border: "none",
+  borderRadius: 6,
+  cursor: "pointer",
+};
+
+const uploadBtn = {
+  width: 34,
+  height: 34,
+  borderRadius: "50%",
+  background: "#1a73e8",
+  color: "#fff",
+  border: "none",
+  fontSize: 20,
+  cursor: "pointer",
+};
