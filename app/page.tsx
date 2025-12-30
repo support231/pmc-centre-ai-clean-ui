@@ -24,6 +24,7 @@ const BLOCKED_FILE_MESSAGE =
 export default function Home() {
   const [question, setQuestion] = useState("");
   const [answer, setAnswer] = useState("");
+  const [previousAnswer, setPreviousAnswer] = useState("");
   const [loading, setLoading] = useState(false);
   const [mode, setMode] = useState<Mode>("");
 
@@ -34,11 +35,16 @@ export default function Home() {
     if (!question.trim() || !mode) return;
 
     setLoading(true);
-    setAnswer("");
 
     try {
       const formData = new FormData();
-      formData.append("question", question);
+
+      const finalQuestion =
+        previousAnswer.trim().length > 0
+          ? `Previous answer:\n${previousAnswer}\n\nFollow-up question:\n${question}`
+          : question;
+
+      formData.append("question", finalQuestion);
       formData.append("mode", mode);
 
       if (selectedFile) {
@@ -54,7 +60,11 @@ export default function Home() {
       );
 
       const data = await res.json();
-      setAnswer(data.answer || "No answer received.");
+      const newAnswer = data.answer || "No answer received.";
+
+      setAnswer(newAnswer);
+      setPreviousAnswer(newAnswer);
+      setQuestion("");
     } catch {
       setAnswer(
         "The uploaded file could not be processed. " +
@@ -98,6 +108,14 @@ export default function Home() {
     if (fileInputRef.current) fileInputRef.current.value = "";
   }
 
+  function onModeChange(m: Mode) {
+    setMode(m);
+    setAnswer("");
+    setPreviousAnswer("");
+    setQuestion("");
+    setSelectedFile(null);
+  }
+
   return (
     <main
       style={{
@@ -136,7 +154,7 @@ export default function Home() {
           "Ask PMC Question",
           "PMC",
           mode,
-          setMode
+          onModeChange
         )}
 
         {modeCard(
@@ -145,7 +163,7 @@ export default function Home() {
           "Ask General Question",
           "GENERAL",
           mode,
-          setMode
+          onModeChange
         )}
 
         {modeCard(
@@ -154,7 +172,7 @@ export default function Home() {
           "View Current Updates",
           "LIVE",
           mode,
-          setMode
+          onModeChange
         )}
       </div>
 
