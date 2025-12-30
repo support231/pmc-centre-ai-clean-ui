@@ -4,6 +4,23 @@ import { useState, useRef } from "react";
 
 type Mode = "PMC" | "GENERAL" | "LIVE" | "";
 
+/* =======================
+   FILE TYPE CONTROL
+   ======================= */
+
+const ALLOWED_MIME_TYPES = [
+  "application/pdf",
+  "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+  "text/plain",
+  "image/jpeg",
+  "image/png",
+  "image/webp",
+];
+
+const BLOCKED_FILE_MESSAGE =
+  "Excel and PowerPoint files will be supported soon. " +
+  "For now, please upload PDF, Word, text, or image files.";
+
 export default function Home() {
   const [question, setQuestion] = useState("");
   const [answer, setAnswer] = useState("");
@@ -40,7 +57,10 @@ export default function Home() {
       const data = await res.json();
       setAnswer(data.answer || "No answer received.");
     } catch {
-      setAnswer("Error contacting backend. Please try again.");
+      setAnswer(
+        "The uploaded file could not be processed. " +
+          "Please try a smaller file, a different format, or remove the file."
+      );
     } finally {
       setLoading(false);
     }
@@ -63,9 +83,17 @@ export default function Home() {
 
   function onFileSelect(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
-    if (file) {
-      setSelectedFile(file);
+    if (!file) return;
+
+    if (!ALLOWED_MIME_TYPES.includes(file.type)) {
+      alert(BLOCKED_FILE_MESSAGE);
+      if (fileInputRef.current) {
+        fileInputRef.current.value = "";
+      }
+      return;
     }
+
+    setSelectedFile(file);
   }
 
   function removeFile() {
