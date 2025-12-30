@@ -186,13 +186,30 @@ export default function Home() {
           </strong>
 
           <button
-            onClick={() => fileInputRef.current?.click()}
-            disabled={!mode || loading}
-            title="Upload file"
-            style={uploadBtn}
-          >
-            +
-          </button>
+  onClick={() => {
+    if (mode === "LIVE") {
+      alert(
+        "Live Web Search does not support document upload. " +
+        "Please switch to PMC or General mode."
+      );
+      return;
+    }
+    fileInputRef.current?.click();
+  }}
+  disabled={!mode || loading}
+  title={
+    mode === "LIVE"
+      ? "File upload not available in Live Web Search"
+      : "Upload file"
+  }
+  style={{
+    ...uploadBtn,
+    opacity: mode === "LIVE" ? 0.5 : 1,
+    cursor: mode === "LIVE" ? "not-allowed" : "pointer",
+  }}
+>
+  +
+</button>
 
           <input
             type="file"
