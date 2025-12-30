@@ -10,6 +10,8 @@ export default function Home() {
   const [loading, setLoading] = useState(false);
   const [mode, setMode] = useState<Mode>("");
 
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   async function ask() {
@@ -19,12 +21,19 @@ export default function Home() {
     setAnswer("");
 
     try {
+      const formData = new FormData();
+      formData.append("question", question);
+      formData.append("mode", mode);
+
+      if (selectedFile) {
+        formData.append("file", selectedFile);
+      }
+
       const res = await fetch(
         `${process.env.NEXT_PUBLIC_PMC_BACKEND_URL}/ask`,
         {
           method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ question, mode }),
+          body: formData,
         }
       );
 
@@ -50,6 +59,20 @@ export default function Home() {
   function copyAnswer() {
     navigator.clipboard.writeText(answer);
     alert("Answer copied to clipboard");
+  }
+
+  function onFileSelect(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (file) {
+      setSelectedFile(file);
+    }
+  }
+
+  function removeFile() {
+    setSelectedFile(null);
+    if (fileInputRef.current) {
+      fileInputRef.current.value = "";
+    }
   }
 
   return (
@@ -147,11 +170,30 @@ export default function Home() {
             type="file"
             ref={fileInputRef}
             hidden
-            onChange={() =>
-              alert("File upload UI only (backend not connected yet).")
-            }
+            onChange={onFileSelect}
           />
         </div>
+
+        {/* SELECTED FILE */}
+        {selectedFile && (
+          <div
+            style={{
+              fontSize: 13,
+              marginBottom: 8,
+              display: "flex",
+              justifyContent: "space-between",
+              alignItems: "center",
+              background: "#eef3fb",
+              padding: "6px 10px",
+              borderRadius: 6,
+            }}
+          >
+            <span>📎 {selectedFile.name}</span>
+            <button onClick={removeFile} style={{ fontSize: 12 }}>
+              Remove
+            </button>
+          </div>
+        )}
 
         {/* QUESTION INPUT */}
         <textarea
@@ -214,7 +256,7 @@ export default function Home() {
 }
 
 /* =======================
-   MODE CARD (ALIGNED)
+   MODE CARD
    ======================= */
 
 function modeCard(
@@ -240,17 +282,10 @@ function modeCard(
     >
       <h3 style={{ marginBottom: 6, fontSize: 17 }}>{title}</h3>
 
-      <p
-        style={{
-          fontSize: 13,
-          color: "#555",
-          lineHeight: 1.4,
-        }}
-      >
+      <p style={{ fontSize: 13, color: "#555", lineHeight: 1.4 }}>
         {text}
       </p>
 
-      {/* BUTTON PINNED TO BOTTOM */}
       <button
         onClick={() => setMode(value)}
         style={{
