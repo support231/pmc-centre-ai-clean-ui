@@ -137,7 +137,7 @@ export default function Home() {
       >
         {modeCard(
           "PMC Expert Mode",
-          "Deep technical guidance on Paper Machine Clothing technology. Best suited for troubleshooting, fabric selection, process optimisation, and interpreting technical documents related to forming, press, and dryer fabrics.",
+          "Expert technical guidance on forming fabrics, press felts, and dryer fabrics.",
           "Ask PMC Question",
           "PMC",
           mode,
@@ -146,7 +146,7 @@ export default function Home() {
 
         {modeCard(
           "General AI Assistant",
-          "A versatile AI assistant for everyday professional and personal tasks.Use this mode to create structured plans and itineraries, build text-based dashboards, draft emails, summarise documents, and answer non-PMC questions.",
+          "Everyday AI support for planning, drafting, summaries, and non-PMC questions.",
           "Ask General Question",
           "GENERAL",
           mode,
@@ -155,7 +155,7 @@ export default function Home() {
 
         {modeCard(
           "Current Updates",
-          "Get answers based on the latest available information from live web sources. Ideal for current prices, recent announcements, policy updates, and other time-sensitive factual queries. Document upload is not supported in this mode.",
+          "Latest developments, policy updates, and time-sensitive information from the web.",
           "View Current Updates",
           "LIVE",
           mode,
