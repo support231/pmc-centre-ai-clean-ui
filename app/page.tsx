@@ -28,7 +28,6 @@ export default function Home() {
   const [mode, setMode] = useState<Mode>("");
 
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
-
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   async function ask() {
@@ -70,10 +69,10 @@ export default function Home() {
     if (mode === "PMC")
       return "Ask a Paper Machine Clothing question (forming, felt, dryer fabrics)…";
     if (mode === "GENERAL")
-      return "Ask a general question, create plans or itineraries, or build structured dashboards…";
+      return "Ask a general question, create plans, drafts, summaries, or dashboards…";
     if (mode === "LIVE")
-      return "Ask about current prices, recent announcements, or latest updates…";
-    return "Select a question type first…";
+      return "Ask about recent announcements, policy updates, or current events…";
+    return "Select a mode to start…";
   }
 
   function copyAnswer() {
@@ -87,9 +86,7 @@ export default function Home() {
 
     if (!ALLOWED_MIME_TYPES.includes(file.type)) {
       alert(BLOCKED_FILE_MESSAGE);
-      if (fileInputRef.current) {
-        fileInputRef.current.value = "";
-      }
+      if (fileInputRef.current) fileInputRef.current.value = "";
       return;
     }
 
@@ -98,15 +95,13 @@ export default function Home() {
 
   function removeFile() {
     setSelectedFile(null);
-    if (fileInputRef.current) {
-      fileInputRef.current.value = "";
-    }
+    if (fileInputRef.current) fileInputRef.current.value = "";
   }
 
   return (
     <main
       style={{
-        padding: 24,
+        padding: 20,
         maxWidth: 1200,
         margin: "0 auto",
         background: "#f2f6fb",
@@ -116,23 +111,23 @@ export default function Home() {
       <div
         style={{
           textAlign: "center",
-          fontSize: 20,
+          fontSize: 18,
           fontWeight: 600,
-          marginBottom: 24,
+          marginBottom: 20,
           color: "#1a73e8",
         }}
       >
-        Choose the question type to get the best possible answer.
+        Choose the mode to get the best possible answer.
       </div>
 
       {/* MODE CARDS */}
       <div
         style={{
           display: "flex",
-          gap: 20,
+          gap: 16,
           justifyContent: "center",
           flexWrap: "wrap",
-          marginBottom: 30,
+          marginBottom: 24,
         }}
       >
         {modeCard(
@@ -155,7 +150,7 @@ export default function Home() {
 
         {modeCard(
           "Current Updates",
-          "Latest developments, policy updates, and time-sensitive information from the web.",
+          "Recent announcements, policy updates, and other time-sensitive information.",
           "View Current Updates",
           "LIVE",
           mode,
@@ -167,7 +162,7 @@ export default function Home() {
       <div
         style={{
           background: "#ffffff",
-          padding: 20,
+          padding: 16,
           borderRadius: 8,
           boxShadow: "0 4px 12px rgba(0,0,0,0.08)",
         }}
@@ -178,7 +173,7 @@ export default function Home() {
             display: "flex",
             justifyContent: "space-between",
             alignItems: "center",
-            marginBottom: 10,
+            marginBottom: 8,
           }}
         >
           <strong style={{ color: "#1a73e8" }}>
@@ -223,18 +218,18 @@ export default function Home() {
         {selectedFile && (
           <div
             style={{
-              fontSize: 13,
-              marginBottom: 8,
+              fontSize: 12,
+              marginBottom: 6,
               display: "flex",
               justifyContent: "space-between",
               alignItems: "center",
               background: "#eef3fb",
-              padding: "6px 10px",
+              padding: "6px 8px",
               borderRadius: 6,
             }}
           >
             <span>📎 {selectedFile.name}</span>
-            <button onClick={removeFile} style={{ fontSize: 12 }}>
+            <button onClick={removeFile} style={{ fontSize: 11 }}>
               Remove
             </button>
           </div>
@@ -251,7 +246,7 @@ export default function Home() {
         />
 
         {/* SUBMIT */}
-        <div style={{ marginTop: 10 }}>
+        <div style={{ marginTop: 8 }}>
           <button
             onClick={ask}
             disabled={!mode || !question.trim() || loading}
@@ -263,7 +258,7 @@ export default function Home() {
 
         {/* ANSWER */}
         {answer && (
-          <div style={{ marginTop: 20 }}>
+          <div style={{ marginTop: 16 }}>
             <div
               style={{
                 display: "flex",
@@ -279,11 +274,11 @@ export default function Home() {
               style={{
                 whiteSpace: "pre-wrap",
                 background: "#f7f9fc",
-                padding: 12,
+                padding: 10,
                 borderRadius: 6,
                 maxHeight: 320,
                 overflowY: "auto",
-                lineHeight: 1.5,
+                lineHeight: 1.45,
               }}
             >
               {answer}
@@ -293,7 +288,7 @@ export default function Home() {
       </div>
 
       {/* FOOTER */}
-      <p style={{ marginTop: 20, fontSize: 12, color: "#666" }}>
+      <p style={{ marginTop: 16, fontSize: 12, color: "#666" }}>
         Powered by OpenAI and PMC CENTRE’s specialized industry knowledge base
       </p>
     </main>
@@ -315,19 +310,26 @@ function modeCard(
   return (
     <div
       style={{
-        width: 300,
-        minHeight: 200,
-        padding: "14px 16px",
-        borderRadius: 10,
+        width: 260,
+        minHeight: 140,
+        padding: "10px 12px",
+        borderRadius: 8,
         background: active === value ? "#e8f0fe" : "#ffffff",
-        boxShadow: "0 3px 10px rgba(0,0,0,0.07)",
+        boxShadow: "0 2px 6px rgba(0,0,0,0.06)",
         display: "flex",
         flexDirection: "column",
       }}
     >
-      <h3 style={{ marginBottom: 6, fontSize: 17 }}>{title}</h3>
+      <h3 style={{ marginBottom: 4, fontSize: 16 }}>{title}</h3>
 
-      <p style={{ fontSize: 13, color: "#555", lineHeight: 1.4 }}>
+      <p
+        style={{
+          fontSize: 12,
+          color: "#555",
+          lineHeight: 1.35,
+          marginBottom: 8,
+        }}
+      >
         {text}
       </p>
 
@@ -335,13 +337,13 @@ function modeCard(
         onClick={() => setMode(value)}
         style={{
           width: "100%",
-          padding: "10px 0",
+          padding: "8px 0",
           marginTop: "auto",
           background: "#1a73e8",
           color: "#fff",
           border: "none",
           borderRadius: 6,
-          fontSize: 14,
+          fontSize: 13,
           cursor: "pointer",
         }}
       >
@@ -357,13 +359,13 @@ function modeCard(
 
 const textareaStyle = {
   width: "100%",
-  padding: 10,
+  padding: 8,
   borderRadius: 6,
   border: "1px solid #ccc",
 };
 
 const submitBtn = {
-  padding: "10px 18px",
+  padding: "8px 16px",
   background: "#1a73e8",
   color: "#fff",
   border: "none",
@@ -372,12 +374,12 @@ const submitBtn = {
 };
 
 const uploadBtn = {
-  width: 34,
-  height: 34,
+  width: 32,
+  height: 32,
   borderRadius: "50%",
   background: "#1a73e8",
   color: "#fff",
   border: "none",
-  fontSize: 20,
+  fontSize: 18,
   cursor: "pointer",
 };
