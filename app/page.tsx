@@ -150,7 +150,7 @@ export default function Home() {
 
         {modeCard(
           "Current Updates",
-          "Recent announcements, policy updates, and other time-sensitive information.",
+          "Recent developments, policy updates, and other time-sensitive information.",
           "View Current Updates",
           "LIVE",
           mode,
