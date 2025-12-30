@@ -1,8 +1,13 @@
 "use client";
 
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 
 type Mode = "PMC" | "GENERAL" | "LIVE" | "";
+
+type ChatMessage = {
+  role: "user" | "assistant";
+  content: string;
+};
 
 /* =======================
    FILE TYPE CONTROL
@@ -22,73 +27,43 @@ const BLOCKED_FILE_MESSAGE =
   "For now, please upload PDF, Word, text, or image files.";
 
 export default function Home() {
-  const [question, setQuestion] = useState("");
-  const [answer, setAnswer] = useState("");
-  const [previousAnswer, setPreviousAnswer] = useState("");
-  const [loading, setLoading] = useState(false);
   const [mode, setMode] = useState<Mode>("");
+  const [input, setInput] = useState("");
+  const [messages, setMessages] = useState<ChatMessage[]>([]);
+  const [loading, setLoading] = useState(false);
 
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const chatEndRef = useRef<HTMLDivElement>(null);
 
-  async function ask() {
-    if (!question.trim() || !mode) return;
+  /* =======================
+     AUTO SCROLL
+     ======================= */
 
-    setLoading(true);
+  useEffect(() => {
+    chatEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, [messages, loading]);
 
-    try {
-      const formData = new FormData();
+  /* =======================
+     MODE CHANGE
+     ======================= */
 
-      const finalQuestion =
-        previousAnswer.trim().length > 0
-          ? `Previous answer:\n${previousAnswer}\n\nFollow-up question:\n${question}`
-          : question;
-
-      formData.append("question", finalQuestion);
-      formData.append("mode", mode);
-
-      if (selectedFile) {
-        formData.append("file", selectedFile);
-      }
-
-      const res = await fetch(
-        `${process.env.NEXT_PUBLIC_PMC_BACKEND_URL}/ask`,
-        {
-          method: "POST",
-          body: formData,
-        }
-      );
-
-      const data = await res.json();
-      const newAnswer = data.answer || "No answer received.";
-
-      setAnswer(newAnswer);
-      setPreviousAnswer(newAnswer);
-      setQuestion("");
-    } catch {
-      setAnswer(
-        "The uploaded file could not be processed. " +
-          "Please try a smaller file, a different format, or remove the file."
-      );
-    } finally {
-      setLoading(false);
-    }
+  function onModeChange(m: Mode) {
+    setMode(m);
+    setMessages([]);
+    setInput("");
+    setSelectedFile(null);
   }
 
-  function placeholderText() {
-    if (mode === "PMC")
-      return "Ask a Paper Machine Clothing question (forming, felt, dryer fabrics)…";
-    if (mode === "GENERAL")
-      return "Ask a general question, create plans, drafts, summaries, or dashboards…";
-    if (mode === "LIVE")
-      return "Ask about recent announcements, policy updates, or current events…";
-    return "Select a mode to start…";
+  function startNewChat() {
+    setMessages([]);
+    setInput("");
+    setSelectedFile(null);
   }
 
-  function copyAnswer() {
-    navigator.clipboard.writeText(answer);
-    alert("Answer copied to clipboard");
-  }
+  /* =======================
+     FILE HANDLING
+     ======================= */
 
   function onFileSelect(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
@@ -108,12 +83,88 @@ export default function Home() {
     if (fileInputRef.current) fileInputRef.current.value = "";
   }
 
-  function onModeChange(m: Mode) {
-    setMode(m);
-    setAnswer("");
-    setPreviousAnswer("");
-    setQuestion("");
-    setSelectedFile(null);
+  /* =======================
+     SEND MESSAGE
+     ======================= */
+
+  async function sendMessage() {
+    if (!input.trim() || !mode) return;
+
+    const userMsg: ChatMessage = {
+      role: "user",
+      content: input.trim(),
+    };
+
+    const updatedMessages = [...messages, userMsg];
+    setMessages(updatedMessages);
+    setInput("");
+    setLoading(true);
+
+    try {
+      // Lightweight context (last 6 turns only)
+      const contextText = updatedMessages
+        .slice(-6)
+        .map((m) =>
+          m.role === "user"
+            ? `User: ${m.content}`
+            : `Assistant: ${m.content}`
+        )
+        .join("\n");
+
+      const formData = new FormData();
+      formData.append("question", contextText);
+      formData.append("mode", mode);
+
+      if (selectedFile) {
+        formData.append("file", selectedFile);
+        setSelectedFile(null);
+      }
+
+      const res = await fetch(
+        `${process.env.NEXT_PUBLIC_PMC_BACKEND_URL}/ask`,
+        {
+          method: "POST",
+          body: formData,
+        }
+      );
+
+      const data = await res.json();
+
+      const assistantMsg: ChatMessage = {
+        role: "assistant",
+        content: data.answer || "No answer received.",
+      };
+
+      setMessages((prev) => [...prev, assistantMsg]);
+    } catch {
+      setMessages((prev) => [
+        ...prev,
+        {
+          role: "assistant",
+          content:
+            "The request could not be processed. Please try again or remove the file.",
+        },
+      ]);
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  function handleKeyDown(e: React.KeyboardEvent<HTMLTextAreaElement>) {
+    if (e.key === "Enter" && !e.shiftKey) {
+      e.preventDefault();
+      sendMessage();
+    }
+  }
+
+  function placeholderText() {
+    if (mode === "PMC")
+      return "Ask a Paper Machine Clothing question (forming, felt, dryer fabrics)…";
+    if (mode === "GENERAL")
+      return "Ask a general question, create plans, drafts, summaries…";
+    if (mode === "LIVE")
+      return "Ask about recent announcements or current events…";
+    return "Select a mode to start…";
   }
 
   return (
@@ -123,15 +174,18 @@ export default function Home() {
         maxWidth: 1200,
         margin: "0 auto",
         background: "#f2f6fb",
+        height: "100vh",
+        display: "flex",
+        flexDirection: "column",
       }}
     >
-      {/* INSTRUCTION TEXT */}
+      {/* HEADER */}
       <div
         style={{
           textAlign: "center",
           fontSize: 18,
           fontWeight: 600,
-          marginBottom: 20,
+          marginBottom: 16,
           color: "#1a73e8",
         }}
       >
@@ -145,7 +199,7 @@ export default function Home() {
           gap: 16,
           justifyContent: "center",
           flexWrap: "wrap",
-          marginBottom: 24,
+          marginBottom: 16,
         }}
       >
         {modeCard(
@@ -176,137 +230,152 @@ export default function Home() {
         )}
       </div>
 
-      {/* CHAT AREA */}
+      {/* CHAT CONTAINER */}
       <div
         style={{
           background: "#ffffff",
-          padding: 16,
           borderRadius: 8,
           boxShadow: "0 4px 12px rgba(0,0,0,0.08)",
+          display: "flex",
+          flexDirection: "column",
+          flex: 1,
         }}
       >
         {/* TOOLBAR */}
         <div
           style={{
+            padding: 12,
             display: "flex",
             justifyContent: "space-between",
             alignItems: "center",
-            marginBottom: 8,
+            borderBottom: "1px solid #eee",
           }}
         >
           <strong style={{ color: "#1a73e8" }}>
-            {mode ? `Mode: ${mode}` : "Select a mode to start"}
+            {mode ? `Mode: ${mode}` : "Select a mode"}
           </strong>
 
-          <button
-            onClick={() => {
-              if (mode === "LIVE") {
-                alert(
-                  "Current Updates does not support document upload. " +
-                    "Please switch to PMC Expert Mode or General AI Assistant."
-                );
-                return;
-              }
-              fileInputRef.current?.click();
-            }}
-            disabled={!mode || loading}
-            title={
-              mode === "LIVE"
-                ? "File upload not available in Current Updates"
-                : "Upload file"
-            }
-            style={{
-              ...uploadBtn,
-              opacity: mode === "LIVE" ? 0.5 : 1,
-              cursor: mode === "LIVE" ? "not-allowed" : "pointer",
-            }}
-          >
-            +
-          </button>
+          <div style={{ display: "flex", gap: 8 }}>
+            <button onClick={startNewChat} style={{ fontSize: 12 }}>
+              New Chat
+            </button>
 
-          <input
-            type="file"
-            ref={fileInputRef}
-            hidden
-            onChange={onFileSelect}
-          />
+            <button
+              onClick={() => {
+                if (mode === "LIVE") {
+                  alert(
+                    "Current Updates does not support document upload."
+                  );
+                  return;
+                }
+                fileInputRef.current?.click();
+              }}
+              disabled={!mode}
+              style={{
+                ...uploadBtn,
+                opacity: mode === "LIVE" ? 0.5 : 1,
+              }}
+            >
+              +
+            </button>
+
+            <input
+              type="file"
+              ref={fileInputRef}
+              hidden
+              onChange={onFileSelect}
+            />
+          </div>
         </div>
 
-        {/* SELECTED FILE */}
+        {/* FILE INFO */}
         {selectedFile && (
           <div
             style={{
               fontSize: 12,
-              marginBottom: 6,
+              padding: "6px 12px",
+              background: "#eef3fb",
               display: "flex",
               justifyContent: "space-between",
-              alignItems: "center",
-              background: "#eef3fb",
-              padding: "6px 8px",
-              borderRadius: 6,
             }}
           >
             <span>📎 {selectedFile.name}</span>
-            <button onClick={removeFile} style={{ fontSize: 11 }}>
-              Remove
-            </button>
+            <button onClick={removeFile}>Remove</button>
           </div>
         )}
 
-        {/* QUESTION INPUT */}
-        <textarea
-          rows={4}
-          style={textareaStyle}
-          placeholder={placeholderText()}
-          value={question}
-          disabled={!mode || loading}
-          onChange={(e) => setQuestion(e.target.value)}
-        />
+        {/* CHAT MESSAGES */}
+        <div
+          style={{
+            flex: 1,
+            overflowY: "auto",
+            padding: 12,
+          }}
+        >
+          {messages.map((m, i) => (
+            <div
+              key={i}
+              style={{
+                textAlign: m.role === "user" ? "right" : "left",
+                marginBottom: 10,
+              }}
+            >
+              <div
+                style={{
+                  display: "inline-block",
+                  background:
+                    m.role === "user" ? "#e8f0fe" : "#f7f9fc",
+                  padding: 10,
+                  borderRadius: 6,
+                  maxWidth: "80%",
+                  whiteSpace: "pre-wrap",
+                }}
+              >
+                {m.content}
+              </div>
+            </div>
+          ))}
 
-        {/* SUBMIT */}
-        <div style={{ marginTop: 8 }}>
-          <button
-            onClick={ask}
-            disabled={!mode || !question.trim() || loading}
-            style={submitBtn}
-          >
-            {loading ? "Thinking…" : "Submit"}
-          </button>
+          {loading && (
+            <div style={{ fontSize: 12, color: "#666" }}>
+              Thinking…
+            </div>
+          )}
+
+          <div ref={chatEndRef} />
         </div>
 
-        {/* ANSWER */}
-        {answer && (
-          <div style={{ marginTop: 16 }}>
-            <div
-              style={{
-                display: "flex",
-                justifyContent: "space-between",
-                marginBottom: 6,
-              }}
-            >
-              <strong>Answer</strong>
-              <button onClick={copyAnswer}>Copy</button>
-            </div>
+        {/* INPUT BAR */}
+        <div
+          style={{
+            padding: 12,
+            borderTop: "1px solid #eee",
+            display: "flex",
+            gap: 8,
+          }}
+        >
+          <textarea
+            rows={2}
+            style={{ ...textareaStyle, flex: 1 }}
+            placeholder={placeholderText()}
+            value={input}
+            disabled={!mode || loading}
+            onChange={(e) => setInput(e.target.value)}
+            onKeyDown={handleKeyDown}
+          />
 
-            <div
-              style={{
-                whiteSpace: "pre-wrap",
-                background: "#f7f9fc",
-                padding: 10,
-                borderRadius: 6,
-                maxHeight: 320,
-                overflowY: "auto",
-                lineHeight: 1.45,
-              }}
-            >
-              {answer}
-            </div>
-          </div>
-        )}
+          <button
+            onClick={sendMessage}
+            disabled={!mode || loading || !input.trim()}
+            style={submitBtn}
+          >
+            Send
+          </button>
+        </div>
       </div>
 
       {/* FOOTER */}
-      <p style={{ marginTop: 16, fontSize: 12, color: "#666" }}>
+      <p style={{ marginTop: 12, fontSize: 12, color: "#666" }}>
         Powered by OpenAI and PMC CENTRE’s specialized industry knowledge base
       </p>
     </main>
@@ -339,30 +408,19 @@ function modeCard(
       }}
     >
       <h3 style={{ marginBottom: 4, fontSize: 16 }}>{title}</h3>
-
-      <p
-        style={{
-          fontSize: 12,
-          color: "#555",
-          lineHeight: 1.35,
-          marginBottom: 8,
-        }}
-      >
+      <p style={{ fontSize: 12, color: "#555", marginBottom: 8 }}>
         {text}
       </p>
-
       <button
         onClick={() => setMode(value)}
         style={{
-          width: "100%",
-          padding: "8px 0",
           marginTop: "auto",
+          padding: "8px 0",
           background: "#1a73e8",
           color: "#fff",
           border: "none",
           borderRadius: 6,
           fontSize: 13,
-          cursor: "pointer",
         }}
       >
         {btn}
