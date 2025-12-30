@@ -146,8 +146,7 @@ export default function Home() {
 
         {modeCard(
           "General AI Assistant",
-          "A versatile AI assistant for everyday professional and personal tasks.
-Use this mode to create structured plans and itineraries, build text-based dashboards, draft emails, summarise documents, and answer non-PMC questions. Results can be refined interactively.",
+          "A versatile AI assistant for everyday professional and personal tasks.Use this mode to create structured plans and itineraries, build text-based dashboards, draft emails, summarise documents, and answer non-PMC questions.",
           "Ask General Question",
           "GENERAL",
           mode,
