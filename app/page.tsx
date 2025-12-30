@@ -70,9 +70,9 @@ export default function Home() {
     if (mode === "PMC")
       return "Ask a Paper Machine Clothing question (forming, felt, dryer fabrics)…";
     if (mode === "GENERAL")
-      return "Ask a general question (draft email, explain concept, GK)…";
+      return "Ask a general question, create plans or itineraries, or build structured dashboards…";
     if (mode === "LIVE")
-      return "Ask about latest developments, announcements, or current events…";
+      return "Ask about current prices, recent announcements, or latest updates…";
     return "Select a question type first…";
   }
 
@@ -137,7 +137,7 @@ export default function Home() {
       >
         {modeCard(
           "PMC Expert Mode",
-          "Deep technical guidance on Paper Machine Clothing technology. Best for troubleshooting, fabric selection, and process questions.",
+          "Deep technical guidance on Paper Machine Clothing technology. Best suited for troubleshooting, fabric selection, process optimisation, and interpreting technical documents related to forming, press, and dryer fabrics.",
           "Ask PMC Question",
           "PMC",
           mode,
@@ -146,7 +146,7 @@ export default function Home() {
 
         {modeCard(
           "General AI Assistant",
-          "Use AI for general knowledge, drafting letters or emails, explanations, and non-PMC questions.",
+          "A versatile AI assistant for everyday professional and personal tasks. Use this mode to create structured plans and itineraries, build text-based dashboards, draft emails or letters, summarise documents, prepare notes, and answer non-PMC questions. Outputs can be refined interactively with follow-up questions.",
           "Ask General Question",
           "GENERAL",
           mode,
@@ -154,9 +154,9 @@ export default function Home() {
         )}
 
         {modeCard(
-          "Live Web Search",
-          "Get answers based on the latest available information from the web. Ideal for recent developments, announcements, and current events.",
-          "Live Search (Latest Info)",
+          "Current Updates",
+          "Get answers based on the latest available information from live web sources. Ideal for current prices, recent announcements, policy updates, and other time-sensitive factual queries. Document upload is not supported in this mode.",
+          "View Current Updates",
           "LIVE",
           mode,
           setMode
@@ -186,30 +186,30 @@ export default function Home() {
           </strong>
 
           <button
-  onClick={() => {
-    if (mode === "LIVE") {
-      alert(
-        "Live Web Search does not support document upload. " +
-        "Please switch to PMC or General mode."
-      );
-      return;
-    }
-    fileInputRef.current?.click();
-  }}
-  disabled={!mode || loading}
-  title={
-    mode === "LIVE"
-      ? "File upload not available in Live Web Search"
-      : "Upload file"
-  }
-  style={{
-    ...uploadBtn,
-    opacity: mode === "LIVE" ? 0.5 : 1,
-    cursor: mode === "LIVE" ? "not-allowed" : "pointer",
-  }}
->
-  +
-</button>
+            onClick={() => {
+              if (mode === "LIVE") {
+                alert(
+                  "Current Updates does not support document upload. " +
+                    "Please switch to PMC Expert Mode or General AI Assistant."
+                );
+                return;
+              }
+              fileInputRef.current?.click();
+            }}
+            disabled={!mode || loading}
+            title={
+              mode === "LIVE"
+                ? "File upload not available in Current Updates"
+                : "Upload file"
+            }
+            style={{
+              ...uploadBtn,
+              opacity: mode === "LIVE" ? 0.5 : 1,
+              cursor: mode === "LIVE" ? "not-allowed" : "pointer",
+            }}
+          >
+            +
+          </button>
 
           <input
             type="file"
