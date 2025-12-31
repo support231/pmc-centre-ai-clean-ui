@@ -393,6 +393,34 @@ export default function Home() {
             alignItems: "center",
           }}
         >
+          {selectedFile && (
+  <div
+    style={{
+      fontSize: 12,
+      padding: "4px 8px",
+      background: "#eef3fb",
+      borderRadius: 6,
+      display: "flex",
+      alignItems: "center",
+      gap: 8,
+    }}
+  >
+    <span>📎 {selectedFile.name}</span>
+    <button
+      onClick={removeFile}
+      style={{
+        fontSize: 11,
+        border: "none",
+        background: "transparent",
+        cursor: "pointer",
+        color: "#1a73e8",
+      }}
+    >
+      Remove
+    </button>
+  </div>
+)}
+
           <button
             onClick={() => {
               if (mode === "LIVE") {
