@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
+const [progressText, setProgressText] = useState("");
 
 type Mode = "PMC" | "GENERAL" | "LIVE" | "";
 
@@ -118,6 +119,16 @@ export default function Home() {
     setInput("");
     setSelectedFiles([]);
     setLoading(true);
+    setProgressText("Analyzing your question…");
+
+setTimeout(() => {
+  setProgressText("Reviewing context…");
+}, 2000);
+
+setTimeout(() => {
+  setProgressText("Preparing response…");
+}, 5000);
+
 
     try {
       const contextText = updatedMessages
@@ -165,6 +176,7 @@ export default function Home() {
       ]);
     } finally {
       setLoading(false);
+      setProgressText("");
     }
   }
 
@@ -376,7 +388,7 @@ export default function Home() {
 
           {loading && (
             <div style={{ fontSize: 12, color: "#666" }}>
-              Thinking…
+              {progressText || "Working…"}
             </div>
           )}
 
