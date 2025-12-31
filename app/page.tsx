@@ -315,7 +315,7 @@ export default function Home() {
               >
                 <span>📎 {f.name}</span>
                 <button
-                  onClick={() => removeFile(i)}
+                  onClick={() => removeFile(0)}
                   style={{
                     fontSize: 11,
                     border: "none",
