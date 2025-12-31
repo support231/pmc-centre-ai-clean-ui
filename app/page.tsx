@@ -45,7 +45,7 @@ export default function Home() {
   }, [messages, loading]);
 
   /* =======================
-     MODE CHANGE
+     MODE / CHAT RESET
      ======================= */
 
   function onModeChange(m: Mode) {
@@ -101,7 +101,6 @@ export default function Home() {
     setLoading(true);
 
     try {
-      // Lightweight context (last 6 turns only)
       const contextText = updatedMessages
         .slice(-6)
         .map((m) =>
@@ -130,12 +129,13 @@ export default function Home() {
 
       const data = await res.json();
 
-      const assistantMsg: ChatMessage = {
-        role: "assistant",
-        content: data.answer || "No answer received.",
-      };
-
-      setMessages((prev) => [...prev, assistantMsg]);
+      setMessages((prev) => [
+        ...prev,
+        {
+          role: "assistant",
+          content: data.answer || "No answer received.",
+        },
+      ]);
     } catch {
       setMessages((prev) => [
         ...prev,
@@ -148,6 +148,22 @@ export default function Home() {
     } finally {
       setLoading(false);
     }
+  }
+
+  /* =======================
+     EDIT & COPY
+     ======================= */
+
+  function editMessage(index: number) {
+    const msg = messages[index];
+    if (msg.role !== "user") return;
+
+    setInput(msg.content);
+    setMessages(messages.slice(0, index));
+  }
+
+  function copyMessage(text: string) {
+    navigator.clipboard.writeText(text);
   }
 
   function handleKeyDown(e: React.KeyboardEvent<HTMLTextAreaElement>) {
@@ -247,7 +263,6 @@ export default function Home() {
             padding: 12,
             display: "flex",
             justifyContent: "space-between",
-            alignItems: "center",
             borderBottom: "1px solid #eee",
           }}
         >
@@ -255,63 +270,13 @@ export default function Home() {
             {mode ? `Mode: ${mode}` : "Select a mode"}
           </strong>
 
-          <div style={{ display: "flex", gap: 8 }}>
-            <button onClick={startNewChat} style={{ fontSize: 12 }}>
-              New Chat
-            </button>
-
-            <button
-              onClick={() => {
-                if (mode === "LIVE") {
-                  alert(
-                    "Current Updates does not support document upload."
-                  );
-                  return;
-                }
-                fileInputRef.current?.click();
-              }}
-              disabled={!mode}
-              style={{
-                ...uploadBtn,
-                opacity: mode === "LIVE" ? 0.5 : 1,
-              }}
-            >
-              +
-            </button>
-
-            <input
-              type="file"
-              ref={fileInputRef}
-              hidden
-              onChange={onFileSelect}
-            />
-          </div>
+          <button onClick={startNewChat} style={{ fontSize: 12 }}>
+            New Chat
+          </button>
         </div>
 
-        {/* FILE INFO */}
-        {selectedFile && (
-          <div
-            style={{
-              fontSize: 12,
-              padding: "6px 12px",
-              background: "#eef3fb",
-              display: "flex",
-              justifyContent: "space-between",
-            }}
-          >
-            <span>📎 {selectedFile.name}</span>
-            <button onClick={removeFile}>Remove</button>
-          </div>
-        )}
-
         {/* CHAT MESSAGES */}
-        <div
-          style={{
-            flex: 1,
-            overflowY: "auto",
-            padding: 12,
-          }}
-        >
+        <div style={{ flex: 1, overflowY: "auto", padding: 12 }}>
           {messages.map((m, i) => (
             <div
               key={i}
@@ -333,6 +298,15 @@ export default function Home() {
               >
                 {m.content}
               </div>
+
+              <div style={{ fontSize: 12, marginTop: 2 }}>
+                {m.role === "user" && (
+                  <button onClick={() => editMessage(i)}>✏️</button>
+                )}
+                {m.role === "assistant" && (
+                  <button onClick={() => copyMessage(m.content)}>📋</button>
+                )}
+              </div>
             </div>
           ))}
 
@@ -352,8 +326,27 @@ export default function Home() {
             borderTop: "1px solid #eee",
             display: "flex",
             gap: 8,
+            alignItems: "center",
           }}
         >
+          {mode !== "LIVE" && (
+            <>
+              <button
+                onClick={() => fileInputRef.current?.click()}
+                style={uploadBtn}
+              >
+                +
+              </button>
+
+              <input
+                type="file"
+                ref={fileInputRef}
+                hidden
+                onChange={onFileSelect}
+              />
+            </>
+          )}
+
           <textarea
             rows={2}
             style={{ ...textareaStyle, flex: 1 }}
@@ -374,7 +367,6 @@ export default function Home() {
         </div>
       </div>
 
-      {/* FOOTER */}
       <p style={{ marginTop: 12, fontSize: 12, color: "#666" }}>
         Powered by OpenAI and PMC CENTRE’s specialized industry knowledge base
       </p>
