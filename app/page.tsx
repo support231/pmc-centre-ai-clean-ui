@@ -329,22 +329,37 @@ export default function Home() {
             alignItems: "center",
           }}
         >
-          {mode !== "LIVE" && (
-            <>
-              <button
-                onClick={() => fileInputRef.current?.click()}
-                style={uploadBtn}
-              >
-                +
-              </button>
+          <button
+  onClick={() => {
+    if (mode === "LIVE") {
+      alert(
+        "Current Updates mode does not support file upload. " +
+        "Please switch to PMC Expert Mode or General AI Assistant."
+      );
+      return;
+    }
+    fileInputRef.current?.click();
+  }}
+  style={{
+    ...uploadBtn,
+    opacity: mode === "LIVE" ? 0.5 : 1,
+    cursor: mode === "LIVE" ? "not-allowed" : "pointer",
+  }}
+  title={
+    mode === "LIVE"
+      ? "File upload not available in Current Updates"
+      : "Upload file"
+  }
+>
+  +
+</button>
 
-              <input
-                type="file"
-                ref={fileInputRef}
-                hidden
-                onChange={onFileSelect}
-              />
-            </>
+<input
+  type="file"
+  ref={fileInputRef}
+  hidden
+  onChange={onFileSelect}
+/>
           )}
 
           <textarea
