@@ -13,10 +13,6 @@ type ChatMessage = {
   };
 };
 
-/* =======================
-   FILE TYPE CONTROL
-   ======================= */
-
 const ALLOWED_MIME_TYPES = [
   "application/pdf",
   "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
@@ -27,8 +23,7 @@ const ALLOWED_MIME_TYPES = [
 ];
 
 const BLOCKED_FILE_MESSAGE =
-  "Excel and PowerPoint files are not supported. " +
-  "Please upload PDF, Word, text, or image files.";
+  "Excel and PowerPoint files are not supported. Please upload PDF, Word, text, or image files.";
 
 export default function Home() {
   const [mode, setMode] = useState<Mode>("");
@@ -36,23 +31,14 @@ export default function Home() {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [loading, setLoading] = useState(false);
 
-  // input-level file only (temporary)
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
   const chatEndRef = useRef<HTMLDivElement>(null);
 
-  /* =======================
-     AUTO SCROLL
-     ======================= */
-
   useEffect(() => {
     chatEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages, loading]);
-
-  /* =======================
-     MODE / CHAT RESET
-     ======================= */
 
   function onModeChange(m: Mode) {
     setMode(m);
@@ -69,10 +55,6 @@ export default function Home() {
     if (fileInputRef.current) fileInputRef.current.value = "";
   }
 
-  /* =======================
-     FILE HANDLING
-     ======================= */
-
   function onFileSelect(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -86,23 +68,17 @@ export default function Home() {
     setSelectedFile(file);
   }
 
-  function removeFile() {
-    setSelectedFile(null);
-    if (fileInputRef.current) fileInputRef.current.value = "";
-  }
-
-  /* =======================
-     SEND MESSAGE
-     ======================= */
-
   async function sendMessage() {
     if (!input.trim() || !mode) return;
+
+    // 🔒 freeze file reference
+    const fileForThisMessage = selectedFile;
 
     const userMessage: ChatMessage = {
       role: "user",
       content: input.trim(),
-      file: selectedFile
-        ? { name: selectedFile.name, type: selectedFile.type }
+      file: fileForThisMessage
+        ? { name: fileForThisMessage.name, type: fileForThisMessage.type }
         : undefined,
     };
 
@@ -112,7 +88,6 @@ export default function Home() {
     setInput("");
     setSelectedFile(null);
     if (fileInputRef.current) fileInputRef.current.value = "";
-
     setLoading(true);
 
     try {
@@ -129,8 +104,8 @@ export default function Home() {
       formData.append("question", contextText);
       formData.append("mode", mode);
 
-      if (userMessage.file && selectedFile) {
-        formData.append("file", selectedFile);
+      if (fileForThisMessage) {
+        formData.append("file", fileForThisMessage);
       }
 
       const res = await fetch(
@@ -142,7 +117,10 @@ export default function Home() {
 
       setMessages((prev) => [
         ...prev,
-        { role: "assistant", content: data.answer || "No answer received." },
+        {
+          role: "assistant",
+          content: data.answer || "No answer received.",
+        },
       ]);
     } catch {
       setMessages((prev) => [
@@ -158,14 +136,9 @@ export default function Home() {
     }
   }
 
-  /* =======================
-     EDIT / COPY
-     ======================= */
-
   function editMessage(index: number) {
     const msg = messages[index];
     if (msg.role !== "user") return;
-
     setInput(msg.content);
     setMessages(messages.slice(0, index));
   }
@@ -183,263 +156,68 @@ export default function Home() {
 
   function placeholderText() {
     if (mode === "PMC")
-      return "Ask a Paper Machine Clothing question (forming, felt, dryer fabrics)…";
+      return "Ask a Paper Machine Clothing question…";
     if (mode === "GENERAL")
-      return "Ask a general question, create plans, drafts, summaries…";
+      return "Ask a general question…";
     if (mode === "LIVE")
-      return "Ask about recent announcements or current events…";
+      return "Ask about recent updates…";
     return "Select a mode to start…";
   }
 
-  /* =======================
-     UI
-     ======================= */
-
   return (
-    <main
-      style={{
-        padding: 20,
-        maxWidth: 1200,
-        margin: "0 auto",
-        background: "#f2f6fb",
-        height: "100vh",
-        display: "flex",
-        flexDirection: "column",
-      }}
-    >
-      {/* HEADER */}
-      <div
-        style={{
-          textAlign: "center",
-          fontSize: 18,
-          fontWeight: 600,
-          marginBottom: 16,
-          color: "#1a73e8",
-        }}
-      >
-        Choose the mode to get the best possible answer.
+    <main style={{ padding: 20, maxWidth: 1200, margin: "0 auto" }}>
+      <div style={{ marginBottom: 12 }}>
+        <button onClick={startNewChat}>New Chat</button>
       </div>
 
-      {/* MODE CARDS */}
-      <div
-        style={{
-          display: "flex",
-          gap: 16,
-          justifyContent: "center",
-          flexWrap: "wrap",
-          marginBottom: 16,
-        }}
-      >
-        {modeCard("PMC Expert Mode", "Expert technical guidance on forming fabrics, press felts, and dryer fabrics.", "Ask PMC Question", "PMC", mode, onModeChange)}
-        {modeCard("General AI Assistant", "Everyday AI support for planning, drafting, summaries, and non-PMC questions.", "Ask General Question", "GENERAL", mode, onModeChange)}
-        {modeCard("Current Updates", "Recent developments, policy updates, and other time-sensitive information.", "View Current Updates", "LIVE", mode, onModeChange)}
-      </div>
-
-      {/* CHAT */}
-      <div
-        style={{
-          background: "#ffffff",
-          borderRadius: 8,
-          boxShadow: "0 4px 12px rgba(0,0,0,0.08)",
-          display: "flex",
-          flexDirection: "column",
-          flex: 1,
-        }}
-      >
-        {/* TOOLBAR */}
-        <div
-          style={{
-            padding: 12,
-            display: "flex",
-            justifyContent: "space-between",
-            borderBottom: "1px solid #eee",
-          }}
-        >
-          <strong style={{ color: "#1a73e8" }}>
-            {mode ? `Mode: ${mode}` : "Select a mode"}
-          </strong>
-          <button onClick={startNewChat} style={{ fontSize: 12 }}>
-            New Chat
-          </button>
-        </div>
-
-        {/* MESSAGES */}
-        <div style={{ flex: 1, overflowY: "auto", padding: 12 }}>
-          {messages.map((m, i) => (
-            <div key={i} style={{ marginBottom: 14, textAlign: m.role === "user" ? "right" : "left" }}>
-              <div
-                style={{
-                  display: "inline-block",
-                  background: m.role === "user" ? "#e8f0fe" : "#f7f9fc",
-                  padding: 10,
-                  borderRadius: 6,
-                  maxWidth: "80%",
-                  whiteSpace: "pre-wrap",
-                }}
-              >
-                {m.file && (
-                  <div style={{ fontSize: 12, marginBottom: 4 }}>
-                    📎 {m.file.name}
-                  </div>
-                )}
-                {m.content}
-              </div>
-
-              <div style={{ fontSize: 12, marginTop: 2 }}>
-                {m.role === "user" && (
-                  <button onClick={() => editMessage(i)}>✏️</button>
-                )}
-                {m.role === "assistant" && (
-                  <button onClick={() => copyMessage(m.content)}>📋</button>
-                )}
-              </div>
+      <div style={{ minHeight: 400 }}>
+        {messages.map((m, i) => (
+          <div key={i} style={{ marginBottom: 14 }}>
+            <div>
+              {m.file && <div>📎 {m.file.name}</div>}
+              <strong>{m.role === "user" ? "You" : "AI"}:</strong> {m.content}
             </div>
-          ))}
-
-          {loading && (
-            <div style={{ fontSize: 12, color: "#666" }}>Thinking…</div>
-          )}
-
-          <div ref={chatEndRef} />
-        </div>
-
-        {/* INPUT BAR */}
-        <div
-          style={{
-            padding: 12,
-            borderTop: "1px solid #eee",
-            display: "flex",
-            gap: 8,
-            alignItems: "center",
-          }}
-        >
-          <button
-            onClick={() => {
-              if (mode === "LIVE") {
-                alert(
-                  "Current Updates mode does not support file upload. Please switch to PMC or General mode."
-                );
-                return;
-              }
-              fileInputRef.current?.click();
-            }}
-            style={{
-              ...uploadBtn,
-              opacity: mode === "LIVE" ? 0.5 : 1,
-              cursor: mode === "LIVE" ? "not-allowed" : "pointer",
-            }}
-          >
-            +
-          </button>
-
-          <input
-            type="file"
-            ref={fileInputRef}
-            hidden
-            onChange={onFileSelect}
-          />
-
-          <textarea
-            rows={2}
-            style={{ ...textareaStyle, flex: 1 }}
-            placeholder={placeholderText()}
-            value={input}
-            disabled={!mode || loading}
-            onChange={(e) => setInput(e.target.value)}
-            onKeyDown={handleKeyDown}
-          />
-
-          <button
-            onClick={sendMessage}
-            disabled={!mode || loading || !input.trim()}
-            style={submitBtn}
-          >
-            Send
-          </button>
-        </div>
+            {m.role === "user" && (
+              <button onClick={() => editMessage(i)}>✏️</button>
+            )}
+            {m.role === "assistant" && (
+              <button onClick={() => copyMessage(m.content)}>📋</button>
+            )}
+          </div>
+        ))}
+        {loading && <div>Thinking…</div>}
+        <div ref={chatEndRef} />
       </div>
 
-      <p style={{ marginTop: 12, fontSize: 12, color: "#666" }}>
-        Powered by OpenAI and PMC CENTRE’s specialized industry knowledge base
-      </p>
+      <div style={{ display: "flex", gap: 8 }}>
+        <button
+          onClick={() => {
+            if (mode === "LIVE") {
+              alert("File upload not supported in Live mode.");
+              return;
+            }
+            fileInputRef.current?.click();
+          }}
+        >
+          +
+        </button>
+
+        <input
+          type="file"
+          ref={fileInputRef}
+          hidden
+          onChange={onFileSelect}
+        />
+
+        <textarea
+          value={input}
+          onChange={(e) => setInput(e.target.value)}
+          onKeyDown={handleKeyDown}
+          placeholder={placeholderText()}
+        />
+
+        <button onClick={sendMessage}>Send</button>
+      </div>
     </main>
   );
 }
-
-/* =======================
-   MODE CARD
-   ======================= */
-
-function modeCard(
-  title: string,
-  text: string,
-  btn: string,
-  value: Mode,
-  active: Mode,
-  setMode: (m: Mode) => void
-) {
-  return (
-    <div
-      style={{
-        width: 260,
-        minHeight: 140,
-        padding: "10px 12px",
-        borderRadius: 8,
-        background: active === value ? "#e8f0fe" : "#ffffff",
-        boxShadow: "0 2px 6px rgba(0,0,0,0.06)",
-        display: "flex",
-        flexDirection: "column",
-      }}
-    >
-      <h3 style={{ marginBottom: 4, fontSize: 16 }}>{title}</h3>
-      <p style={{ fontSize: 12, color: "#555", marginBottom: 8 }}>
-        {text}
-      </p>
-      <button
-        onClick={() => setMode(value)}
-        style={{
-          marginTop: "auto",
-          padding: "8px 0",
-          background: "#1a73e8",
-          color: "#fff",
-          border: "none",
-          borderRadius: 6,
-          fontSize: 13,
-        }}
-      >
-        {btn}
-      </button>
-    </div>
-  );
-}
-
-/* =======================
-   STYLES
-   ======================= */
-
-const textareaStyle = {
-  width: "100%",
-  padding: 8,
-  borderRadius: 6,
-  border: "1px solid #ccc",
-};
-
-const submitBtn = {
-  padding: "8px 16px",
-  background: "#1a73e8",
-  color: "#fff",
-  border: "none",
-  borderRadius: 6,
-  cursor: "pointer",
-};
-
-const uploadBtn = {
-  width: 32,
-  height: 32,
-  borderRadius: "50%",
-  background: "#1a73e8",
-  color: "#fff",
-  border: "none",
-  fontSize: 18,
-  cursor: "pointer",
-};
