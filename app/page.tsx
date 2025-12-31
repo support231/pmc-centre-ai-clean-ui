@@ -160,7 +160,7 @@ export default function Home() {
         ...prev,
         {
           role: "assistant",
-          content: "A temporary error occurred. Please try again.",
+          content: "I may not have fully understood your question. Could you please clarify what you want me to focus on?",
         },
       ]);
     } finally {
