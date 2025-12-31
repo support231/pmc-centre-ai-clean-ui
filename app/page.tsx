@@ -23,8 +23,12 @@ const ALLOWED_MIME_TYPES = [
 ];
 
 const BLOCKED_FILE_MESSAGE =
-  "Excel and PowerPoint files will be supported soon. " +
-  "For now, please upload PDF, Word, text, or image files.";
+  "Excel and PowerPoint files are not supported. " +
+  "Please upload PDF, Word, text, or image files.";
+
+/* =======================
+   MAIN COMPONENT
+   ======================= */
 
 export default function Home() {
   const [mode, setMode] = useState<Mode>("");
@@ -33,6 +37,7 @@ export default function Home() {
   const [loading, setLoading] = useState(false);
 
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
+
   const fileInputRef = useRef<HTMLInputElement>(null);
   const chatEndRef = useRef<HTMLDivElement>(null);
 
@@ -53,12 +58,14 @@ export default function Home() {
     setMessages([]);
     setInput("");
     setSelectedFile(null);
+    if (fileInputRef.current) fileInputRef.current.value = "";
   }
 
   function startNewChat() {
     setMessages([]);
     setInput("");
     setSelectedFile(null);
+    if (fileInputRef.current) fileInputRef.current.value = "";
   }
 
   /* =======================
@@ -117,6 +124,7 @@ export default function Home() {
       if (selectedFile) {
         formData.append("file", selectedFile);
         setSelectedFile(null);
+        if (fileInputRef.current) fileInputRef.current.value = "";
       }
 
       const res = await fetch(
@@ -142,7 +150,7 @@ export default function Home() {
         {
           role: "assistant",
           content:
-            "The request could not be processed. Please try again or remove the file.",
+            "A temporary error occurred. Please try again.",
         },
       ]);
     } finally {
@@ -151,7 +159,7 @@ export default function Home() {
   }
 
   /* =======================
-     EDIT & COPY
+     EDIT / COPY
      ======================= */
 
   function editMessage(index: number) {
@@ -182,6 +190,10 @@ export default function Home() {
       return "Ask about recent announcements or current events…";
     return "Select a mode to start…";
   }
+
+  /* =======================
+     UI
+     ======================= */
 
   return (
     <main
@@ -275,6 +287,34 @@ export default function Home() {
           </button>
         </div>
 
+        {/* SELECTED FILE PREVIEW */}
+        {selectedFile && (
+          <div
+            style={{
+              fontSize: 12,
+              padding: "6px 12px",
+              background: "#eef3fb",
+              display: "flex",
+              justifyContent: "space-between",
+              alignItems: "center",
+              borderBottom: "1px solid #ddd",
+            }}
+          >
+            <span>📎 {selectedFile.name}</span>
+            <button
+              onClick={removeFile}
+              style={{
+                fontSize: 11,
+                border: "none",
+                background: "transparent",
+                cursor: "pointer",
+              }}
+            >
+              Remove
+            </button>
+          </div>
+        )}
+
         {/* CHAT MESSAGES */}
         <div style={{ flex: 1, overflowY: "auto", padding: 12 }}>
           {messages.map((m, i) => (
@@ -329,37 +369,37 @@ export default function Home() {
             alignItems: "center",
           }}
         >
-          <button onClick={() => {
-    if (mode === "LIVE") {
-      alert(
-        "Current Updates mode does not support file upload. " +
-        "Please switch to PMC Expert Mode or General AI Assistant."
-      );
-      return;
-    }
-    fileInputRef.current?.click();
-  }}
-  style={{
-    ...uploadBtn,
-    opacity: mode === "LIVE" ? 0.5 : 1,
-    cursor: mode === "LIVE" ? "not-allowed" : "pointer",
-  }}
-  title={
-    mode === "LIVE"
-      ? "File upload not available in Current Updates"
-      : "Upload file"
-  }
->
-  +
-</button>
+          <button
+            onClick={() => {
+              if (mode === "LIVE") {
+                alert(
+                  "Current Updates mode does not support file upload. " +
+                    "Please switch to PMC Expert Mode or General AI Assistant."
+                );
+                return;
+              }
+              fileInputRef.current?.click();
+            }}
+            style={{
+              ...uploadBtn,
+              opacity: mode === "LIVE" ? 0.5 : 1,
+              cursor: mode === "LIVE" ? "not-allowed" : "pointer",
+            }}
+            title={
+              mode === "LIVE"
+                ? "File upload not available in Current Updates"
+                : "Upload file"
+            }
+          >
+            +
+          </button>
 
-<input
-  type="file"
-  ref={fileInputRef}
-  hidden
-  onChange={onFileSelect}
-/>
-    
+          <input
+            type="file"
+            ref={fileInputRef}
+            hidden
+            onChange={onFileSelect}
+          />
 
           <textarea
             rows={2}
