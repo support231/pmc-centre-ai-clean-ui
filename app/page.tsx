@@ -7,6 +7,10 @@ type Mode = "PMC" | "GENERAL" | "LIVE" | "";
 type ChatMessage = {
   role: "user" | "assistant";
   content: string;
+  file?: {
+    name: string;
+    type: string;
+  };
 };
 
 /* =======================
@@ -26,16 +30,13 @@ const BLOCKED_FILE_MESSAGE =
   "Excel and PowerPoint files are not supported. " +
   "Please upload PDF, Word, text, or image files.";
 
-/* =======================
-   MAIN COMPONENT
-   ======================= */
-
 export default function Home() {
   const [mode, setMode] = useState<Mode>("");
   const [input, setInput] = useState("");
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [loading, setLoading] = useState(false);
 
+  // input-level file only (temporary)
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -97,14 +98,21 @@ export default function Home() {
   async function sendMessage() {
     if (!input.trim() || !mode) return;
 
-    const userMsg: ChatMessage = {
+    const userMessage: ChatMessage = {
       role: "user",
       content: input.trim(),
+      file: selectedFile
+        ? { name: selectedFile.name, type: selectedFile.type }
+        : undefined,
     };
 
-    const updatedMessages = [...messages, userMsg];
+    const updatedMessages = [...messages, userMessage];
     setMessages(updatedMessages);
+
     setInput("");
+    setSelectedFile(null);
+    if (fileInputRef.current) fileInputRef.current.value = "";
+
     setLoading(true);
 
     try {
@@ -121,28 +129,20 @@ export default function Home() {
       formData.append("question", contextText);
       formData.append("mode", mode);
 
-      if (selectedFile) {
+      if (userMessage.file && selectedFile) {
         formData.append("file", selectedFile);
-        setSelectedFile(null);
-        if (fileInputRef.current) fileInputRef.current.value = "";
       }
 
       const res = await fetch(
         `${process.env.NEXT_PUBLIC_PMC_BACKEND_URL}/ask`,
-        {
-          method: "POST",
-          body: formData,
-        }
+        { method: "POST", body: formData }
       );
 
       const data = await res.json();
 
       setMessages((prev) => [
         ...prev,
-        {
-          role: "assistant",
-          content: data.answer || "No answer received.",
-        },
+        { role: "assistant", content: data.answer || "No answer received." },
       ]);
     } catch {
       setMessages((prev) => [
@@ -150,7 +150,7 @@ export default function Home() {
         {
           role: "assistant",
           content:
-            "A temporary error occurred. Please try again.",
+            "I had trouble processing that request. Could you clarify what you want me to do?",
         },
       ]);
     } finally {
@@ -230,35 +230,12 @@ export default function Home() {
           marginBottom: 16,
         }}
       >
-        {modeCard(
-          "PMC Expert Mode",
-          "Expert technical guidance on forming fabrics, press felts, and dryer fabrics.",
-          "Ask PMC Question",
-          "PMC",
-          mode,
-          onModeChange
-        )}
-
-        {modeCard(
-          "General AI Assistant",
-          "Everyday AI support for planning, drafting, summaries, and non-PMC questions.",
-          "Ask General Question",
-          "GENERAL",
-          mode,
-          onModeChange
-        )}
-
-        {modeCard(
-          "Current Updates",
-          "Recent developments, policy updates, and other time-sensitive information.",
-          "View Current Updates",
-          "LIVE",
-          mode,
-          onModeChange
-        )}
+        {modeCard("PMC Expert Mode", "Expert technical guidance on forming fabrics, press felts, and dryer fabrics.", "Ask PMC Question", "PMC", mode, onModeChange)}
+        {modeCard("General AI Assistant", "Everyday AI support for planning, drafting, summaries, and non-PMC questions.", "Ask General Question", "GENERAL", mode, onModeChange)}
+        {modeCard("Current Updates", "Recent developments, policy updates, and other time-sensitive information.", "View Current Updates", "LIVE", mode, onModeChange)}
       </div>
 
-      {/* CHAT CONTAINER */}
+      {/* CHAT */}
       <div
         style={{
           background: "#ffffff",
@@ -281,61 +258,30 @@ export default function Home() {
           <strong style={{ color: "#1a73e8" }}>
             {mode ? `Mode: ${mode}` : "Select a mode"}
           </strong>
-
           <button onClick={startNewChat} style={{ fontSize: 12 }}>
             New Chat
           </button>
         </div>
 
-        {/* SELECTED FILE PREVIEW */}
-        {selectedFile && (
-          <div
-            style={{
-              fontSize: 12,
-              padding: "6px 12px",
-              background: "#eef3fb",
-              display: "flex",
-              justifyContent: "space-between",
-              alignItems: "center",
-              borderBottom: "1px solid #ddd",
-            }}
-          >
-            <span>📎 {selectedFile.name}</span>
-            <button
-              onClick={removeFile}
-              style={{
-                fontSize: 11,
-                border: "none",
-                background: "transparent",
-                cursor: "pointer",
-              }}
-            >
-              Remove
-            </button>
-          </div>
-        )}
-
-        {/* CHAT MESSAGES */}
+        {/* MESSAGES */}
         <div style={{ flex: 1, overflowY: "auto", padding: 12 }}>
           {messages.map((m, i) => (
-            <div
-              key={i}
-              style={{
-                textAlign: m.role === "user" ? "right" : "left",
-                marginBottom: 10,
-              }}
-            >
+            <div key={i} style={{ marginBottom: 14, textAlign: m.role === "user" ? "right" : "left" }}>
               <div
                 style={{
                   display: "inline-block",
-                  background:
-                    m.role === "user" ? "#e8f0fe" : "#f7f9fc",
+                  background: m.role === "user" ? "#e8f0fe" : "#f7f9fc",
                   padding: 10,
                   borderRadius: 6,
                   maxWidth: "80%",
                   whiteSpace: "pre-wrap",
                 }}
               >
+                {m.file && (
+                  <div style={{ fontSize: 12, marginBottom: 4 }}>
+                    📎 {m.file.name}
+                  </div>
+                )}
                 {m.content}
               </div>
 
@@ -351,9 +297,7 @@ export default function Home() {
           ))}
 
           {loading && (
-            <div style={{ fontSize: 12, color: "#666" }}>
-              Thinking…
-            </div>
+            <div style={{ fontSize: 12, color: "#666" }}>Thinking…</div>
           )}
 
           <div ref={chatEndRef} />
@@ -373,8 +317,7 @@ export default function Home() {
             onClick={() => {
               if (mode === "LIVE") {
                 alert(
-                  "Current Updates mode does not support file upload. " +
-                    "Please switch to PMC Expert Mode or General AI Assistant."
+                  "Current Updates mode does not support file upload. Please switch to PMC or General mode."
                 );
                 return;
               }
@@ -385,11 +328,6 @@ export default function Home() {
               opacity: mode === "LIVE" ? 0.5 : 1,
               cursor: mode === "LIVE" ? "not-allowed" : "pointer",
             }}
-            title={
-              mode === "LIVE"
-                ? "File upload not available in Current Updates"
-                : "Upload file"
-            }
           >
             +
           </button>
