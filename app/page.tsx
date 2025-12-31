@@ -7,6 +7,7 @@ type Mode = "PMC" | "GENERAL" | "LIVE" | "";
 type ChatMessage = {
   role: "user" | "assistant";
   content: string;
+  files?: File[]; // ✅ NEW: files tied to THIS message only
 };
 
 /* =======================
@@ -36,7 +37,8 @@ export default function Home() {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [loading, setLoading] = useState(false);
 
-  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  // ✅ CHANGED: multiple pending files (per message)
+  const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
   const chatEndRef = useRef<HTMLDivElement>(null);
@@ -57,14 +59,14 @@ export default function Home() {
     setMode(m);
     setMessages([]);
     setInput("");
-    setSelectedFile(null);
+    setSelectedFiles([]);
     if (fileInputRef.current) fileInputRef.current.value = "";
   }
 
   function startNewChat() {
     setMessages([]);
     setInput("");
-    setSelectedFile(null);
+    setSelectedFiles([]);
     if (fileInputRef.current) fileInputRef.current.value = "";
   }
 
@@ -73,21 +75,28 @@ export default function Home() {
      ======================= */
 
   function onFileSelect(e: React.ChangeEvent<HTMLInputElement>) {
-    const file = e.target.files?.[0];
-    if (!file) return;
+    const files = Array.from(e.target.files || []);
+    if (!files.length) return;
 
-    if (!ALLOWED_MIME_TYPES.includes(file.type)) {
-      alert(BLOCKED_FILE_MESSAGE);
-      if (fileInputRef.current) fileInputRef.current.value = "";
-      return;
+    const validFiles: File[] = [];
+
+    for (const file of files) {
+      if (!ALLOWED_MIME_TYPES.includes(file.type)) {
+        alert(BLOCKED_FILE_MESSAGE);
+        continue;
+      }
+      validFiles.push(file);
     }
 
-    setSelectedFile(file);
+    if (validFiles.length) {
+      setSelectedFiles((prev) => [...prev, ...validFiles]);
+    }
+
+    if (fileInputRef.current) fileInputRef.current.value = "";
   }
 
-  function removeFile() {
-    setSelectedFile(null);
-    if (fileInputRef.current) fileInputRef.current.value = "";
+  function removeFile(index: number) {
+    setSelectedFiles((prev) => prev.filter((_, i) => i !== index));
   }
 
   /* =======================
@@ -97,14 +106,17 @@ export default function Home() {
   async function sendMessage() {
     if (!input.trim() || !mode) return;
 
+    // ✅ USER MESSAGE NOW OWNS ITS FILES
     const userMsg: ChatMessage = {
       role: "user",
       content: input.trim(),
+      files: selectedFiles.length ? selectedFiles : undefined,
     };
 
     const updatedMessages = [...messages, userMsg];
     setMessages(updatedMessages);
     setInput("");
+    setSelectedFiles([]);
     setLoading(true);
 
     try {
@@ -121,11 +133,10 @@ export default function Home() {
       formData.append("question", contextText);
       formData.append("mode", mode);
 
-      if (selectedFile) {
-        formData.append("file", selectedFile);
-        setSelectedFile(null);
-        if (fileInputRef.current) fileInputRef.current.value = "";
-      }
+      // 🔒 backend unchanged: still receives files normally
+      userMsg.files?.forEach((file) => {
+        formData.append("file", file);
+      });
 
       const res = await fetch(
         `${process.env.NEXT_PUBLIC_PMC_BACKEND_URL}/ask`,
@@ -149,8 +160,7 @@ export default function Home() {
         ...prev,
         {
           role: "assistant",
-          content:
-            "A temporary error occurred. Please try again.",
+          content: "A temporary error occurred. Please try again.",
         },
       ]);
     } finally {
@@ -167,6 +177,7 @@ export default function Home() {
     if (msg.role !== "user") return;
 
     setInput(msg.content);
+    setSelectedFiles(msg.files || []);
     setMessages(messages.slice(0, index));
   }
 
@@ -287,31 +298,35 @@ export default function Home() {
           </button>
         </div>
 
-        {/* SELECTED FILE PREVIEW */}
-        {selectedFile && (
+        {/* PENDING FILE PREVIEW (BEFORE SEND) */}
+        {selectedFiles.length > 0 && (
           <div
             style={{
               fontSize: 12,
               padding: "6px 12px",
               background: "#eef3fb",
-              display: "flex",
-              justifyContent: "space-between",
-              alignItems: "center",
               borderBottom: "1px solid #ddd",
             }}
           >
-            <span>📎 {selectedFile.name}</span>
-            <button
-              onClick={removeFile}
-              style={{
-                fontSize: 11,
-                border: "none",
-                background: "transparent",
-                cursor: "pointer",
-              }}
-            >
-              Remove
-            </button>
+            {selectedFiles.map((f, i) => (
+              <div
+                key={i}
+                style={{ display: "flex", justifyContent: "space-between" }}
+              >
+                <span>📎 {f.name}</span>
+                <button
+                  onClick={() => removeFile(i)}
+                  style={{
+                    fontSize: 11,
+                    border: "none",
+                    background: "transparent",
+                    cursor: "pointer",
+                  }}
+                >
+                  Remove
+                </button>
+              </div>
+            ))}
           </div>
         )}
 
@@ -337,6 +352,15 @@ export default function Home() {
                 }}
               >
                 {m.content}
+
+                {/* ✅ FILES NOW LIVE WITH THE MESSAGE */}
+                {m.files && (
+                  <div style={{ marginTop: 6, fontSize: 12 }}>
+                    {m.files.map((f, idx) => (
+                      <div key={idx}>📎 {f.name}</div>
+                    ))}
+                  </div>
+                )}
               </div>
 
               <div style={{ fontSize: 12, marginTop: 2 }}>
@@ -385,11 +409,6 @@ export default function Home() {
               opacity: mode === "LIVE" ? 0.5 : 1,
               cursor: mode === "LIVE" ? "not-allowed" : "pointer",
             }}
-            title={
-              mode === "LIVE"
-                ? "File upload not available in Current Updates"
-                : "Upload file"
-            }
           >
             +
           </button>
@@ -398,6 +417,7 @@ export default function Home() {
             type="file"
             ref={fileInputRef}
             hidden
+            multiple
             onChange={onFileSelect}
           />
 
