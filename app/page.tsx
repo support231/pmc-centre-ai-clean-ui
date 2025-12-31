@@ -39,7 +39,7 @@ export default function Home() {
 
   // ✅ CHANGED: multiple pending files (per message)
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
-
+  const selectedFile = selectedFiles[0];
   const fileInputRef = useRef<HTMLInputElement>(null);
   const chatEndRef = useRef<HTMLDivElement>(null);
 
