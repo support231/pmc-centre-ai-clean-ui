@@ -7,7 +7,7 @@ type Mode = "PMC" | "GENERAL" | "LIVE" | "";
 type ChatMessage = {
   role: "user" | "assistant";
   content: string;
-  files?: File[]; // ✅ NEW: files tied to THIS message only
+  files?: File[];
 };
 
 /* =======================
@@ -37,7 +37,7 @@ export default function Home() {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [loading, setLoading] = useState(false);
 
-  // ✅ CHANGED: multiple pending files (per message)
+  // Pending files BEFORE send (will not be shown globally)
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -95,10 +95,6 @@ export default function Home() {
     if (fileInputRef.current) fileInputRef.current.value = "";
   }
 
-  function removeFile(index: number) {
-    setSelectedFiles((prev) => prev.filter((_, i) => i !== index));
-  }
-
   /* =======================
      SEND MESSAGE
      ======================= */
@@ -106,7 +102,6 @@ export default function Home() {
   async function sendMessage() {
     if (!input.trim() || !mode) return;
 
-    // ✅ USER MESSAGE NOW OWNS ITS FILES
     const userMsg: ChatMessage = {
       role: "user",
       content: input.trim(),
@@ -116,7 +111,7 @@ export default function Home() {
     const updatedMessages = [...messages, userMsg];
     setMessages(updatedMessages);
     setInput("");
-    setSelectedFiles([]);
+    setSelectedFiles([]); // ✅ clear pending files immediately
     setLoading(true);
 
     try {
@@ -133,7 +128,6 @@ export default function Home() {
       formData.append("question", contextText);
       formData.append("mode", mode);
 
-      // 🔒 backend unchanged: still receives files normally
       userMsg.files?.forEach((file) => {
         formData.append("file", file);
       });
@@ -160,7 +154,8 @@ export default function Home() {
         ...prev,
         {
           role: "assistant",
-          content: "A temporary error occurred. Please try again.",
+          content:
+            "I may need a bit more clarity to proceed. Could you please уточify your request?",
         },
       ]);
     } finally {
@@ -177,7 +172,6 @@ export default function Home() {
     if (msg.role !== "user") return;
 
     setInput(msg.content);
-    setSelectedFiles(msg.files || []);
     setMessages(messages.slice(0, index));
   }
 
@@ -298,38 +292,6 @@ export default function Home() {
           </button>
         </div>
 
-        {/* PENDING FILE PREVIEW (BEFORE SEND) */}
-        {selectedFiles.length > 0 && (
-          <div
-            style={{
-              fontSize: 12,
-              padding: "6px 12px",
-              background: "#eef3fb",
-              borderBottom: "1px solid #ddd",
-            }}
-          >
-            {selectedFiles.map((f, i) => (
-              <div
-                key={i}
-                style={{ display: "flex", justifyContent: "space-between" }}
-              >
-                <span>📎 {f.name}</span>
-                <button
-                  onClick={() => removeFile(i)}
-                  style={{
-                    fontSize: 11,
-                    border: "none",
-                    background: "transparent",
-                    cursor: "pointer",
-                  }}
-                >
-                  Remove
-                </button>
-              </div>
-            ))}
-          </div>
-        )}
-
         {/* CHAT MESSAGES */}
         <div style={{ flex: 1, overflowY: "auto", padding: 12 }}>
           {messages.map((m, i) => (
@@ -353,7 +315,6 @@ export default function Home() {
               >
                 {m.content}
 
-                {/* ✅ FILES NOW LIVE WITH THE MESSAGE */}
                 {m.files && (
                   <div style={{ marginTop: 6, fontSize: 12 }}>
                     {m.files.map((f, idx) => (
