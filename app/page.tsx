@@ -359,7 +359,7 @@ export default function Home() {
   hidden
   onChange={onFileSelect}
 />
-          )}
+    
 
           <textarea
             rows={2}
