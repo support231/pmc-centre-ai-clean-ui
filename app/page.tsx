@@ -329,8 +329,7 @@ export default function Home() {
             alignItems: "center",
           }}
         >
-          <button
-  onClick={() => {
+          <button onClick={() => {
     if (mode === "LIVE") {
       alert(
         "Current Updates mode does not support file upload. " +
